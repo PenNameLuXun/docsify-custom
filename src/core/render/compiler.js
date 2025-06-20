@@ -72,9 +72,14 @@ export class Compiler {
       const curFileName = this.router.parse().file;
 
       if (isCached) {
-        this.toc = this.cacheTOC[curFileName];
+        //this.toc = this.cacheTOC[curFileName];
       } else {
         this.cacheTOC[curFileName] = [...this.toc];
+        console.log(
+          'this.cacheTOC[curFileName] lenth:',
+          this.cacheTOC[curFileName].length,
+          this.toc.length,
+        );
       }
 
       return result;

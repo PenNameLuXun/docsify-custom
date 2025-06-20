@@ -13,7 +13,8 @@ export const prodConfig = {
   open: false,
   port: 8080,
   server: {
-    baseDir: './docs',
+    baseDir: './bst_docs',
+    index: 'index1.html',
   },
   snippet: false,
   ui: false,
@@ -22,7 +23,12 @@ export const prodConfig = {
 // Development (local URLs, watch enabled)
 export const devConfig = {
   ...prodConfig,
-  files: ['CHANGELOG.md', 'docs/**/*', 'dist/**/*'],
+  files: [
+    'CHANGELOG.md',
+    'bst_docs/**/*',
+    'dist/**/*',
+    '/home/groot/bst/c1200_docs/docs/**/*',
+  ],
   port: 3000,
   rewriteRules,
   reloadDebounce: 1000,

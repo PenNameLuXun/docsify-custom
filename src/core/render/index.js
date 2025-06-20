@@ -274,6 +274,7 @@ export function Render(Base) {
       }
     }
 
+    #last_sidebar_text = null;
     _renderSidebar(text) {
       const { maxLevel, subMaxLevel, loadSidebar, hideSidebar } = this.config;
       const sidebarEl = dom.getNode('aside.sidebar');
@@ -287,7 +288,13 @@ export function Render(Base) {
         return null;
       }
 
+      if (this.#last_sidebar_text == text) return;
+      this.#last_sidebar_text = text;
+
       dom.setHTML('.sidebar-nav', this.compiler.sidebar(text, maxLevel));
+      if (window.bst_sidebar_rendered) {
+        window.bst_sidebar_rendered();
+      }
 
       sidebarToggleEl.setAttribute('aria-expanded', !isMobile());
 

@@ -48,6 +48,12 @@ export class HashHistory extends History {
       if (el && el.tagName === 'A' && !isExternal(el.href)) {
         navigating = true;
       }
+      if (e.target.tagName === 'A') {
+        var source = 'clicked';
+        if (e.target.href === location.href) {
+          cb({ event: e, source });
+        }
+      }
     });
 
     on('hashchange', e => {

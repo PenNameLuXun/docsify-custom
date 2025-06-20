@@ -186,7 +186,7 @@ export function Fetch(Base) {
       }
     }
 
-    $fetch(cb = noop, onNavigate = this.onNavigate.bind(this)) {
+    _do_fetch(cb, onNavigate) {
       const done = () => {
         this.callHook('doneEach');
         cb();
@@ -202,6 +202,12 @@ export function Fetch(Base) {
           done();
         });
       }
+    }
+
+    $fetch(cb = noop, onNavigate = this.onNavigate.bind(this)) {
+      this.callHook('on_fetch', this.route, _ => {
+        this._do_fetch(cb, onNavigate);
+      });
     }
 
     _fetchFallbackPage(path, qs, cb = noop) {

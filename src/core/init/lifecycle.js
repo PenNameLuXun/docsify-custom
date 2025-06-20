@@ -19,6 +19,7 @@ export function Lifecycle(Base) {
         'afterEach',
         'doneEach',
         'ready',
+        'on_fetch',
       ];
 
       hooks.forEach(hook => {
