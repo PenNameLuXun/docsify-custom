@@ -1,4 +1,4 @@
-<p align="center">
+<!-- <p align="center">
   <a href="https://docsify.js.org">
     <img alt="docsify" src="./docs/_media/icon.svg">
   </a>
@@ -80,4 +80,68 @@ This project exists thanks to all the people who contribute. [[Contribute](CONTR
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) -->
+
+
+# 介绍
+这是一个基于[docsify](https://github.com/docsifyjs/docsify)的克隆仓库，分支`feat-for-bst`实现了额外的适配，以满足BST的产品文档需要。
+
+
+# 二次开发
+如有需求变化，或者功能修复，视情况基于原仓库代码[docsify](https://github.com/docsifyjs/docsify)进行再次适配，或者直接基于`feat-for-bst`进行开发。接下来介绍开发步骤。
+
+## 安装node
+初次开发需要安装`node`,推荐使用`nvm`工具来安装`node`，因为可以实现版本管理
+```bash
+# 安装nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+
+# 安装最新node
+nvm install --lts
+
+# 安装当前的node版本v22.16.0
+nvm install v22.16.0
+
+# 使用 node版本v22.16.0
+nvm use v22.16.0
+```
+注意最好使用`v22.16.0`版本的node 避免一些依赖问题。安装好后就可以使用`npm`命令了，这是一个`node.js`栈下的包管理工具。
+
+
+## 依赖安装
+```bash
+rm -rf ./node_modules package-lock.json
+
+# 使用代理(可选)
+export all_proxy=http://10.28.2.62:8118 
+
+# 安装依赖
+npm install
+```
+
+## 运行dev
+默认情况下将使用`./bst_doc`下的文档作为内容进行展示(查询`server.configs.js`文件)，所以如果`./bst_doc`目录下为空将看不到文档内容。
+因此需要提前将内容准备好，可以通过如下命令抓取c1200文档：
+
+```bash
+mkdir bst_docs
+cd ./bst_docs
+# 抓取 master 分支的文档
+repo init -u http://bstcd.stuffs.biz/docs/c1200_struct_docs.git --repo-url=http://bstcd.stuffs.biz/bsp/thirdparty/git_repo --no-repo-verify --repo-rev=stable
+
+# 将repo拉取道德docs中的内容移动到 bst_docs 目录
+mv ./docs/* ./
+```
+
+接下来就执行命令即可开始调试开发:
+```bash
+npm run dev
+```
+
+直接修改`src`中的源码就是进行开发了。
+
+## 提交代码
+```bash
+# --no-verify避免 git hook 执行各种检查，不需要
+git commit -m "xxxx" --no-verify
+```
