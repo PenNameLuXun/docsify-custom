@@ -43,14 +43,15 @@ export class HashHistory extends History {
     let navigating = false;
 
     on('click', e => {
-      const el = e.target.tagName === 'A' ? e.target : e.target.parentNode;
+      //const el = e.target.tagName === 'A' ? e.target : e.target.parentNode;
+      const el = e.target.closest('a');
 
       if (el && el.tagName === 'A' && !isExternal(el.href)) {
         navigating = true;
       }
-      if (e.target.tagName === 'A') {
+      if (el && el.tagName === 'A') {
         var source = 'clicked';
-        if (e.target.href === location.href) {
+        if (el && el.href === location.href) {
           cb({ event: e, source });
         }
       }

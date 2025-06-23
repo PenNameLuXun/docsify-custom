@@ -72,7 +72,9 @@ export function Events(Base) {
      * @void
      */
     #initHeadings() {
-      const headingElms = dom.findAll('#main :where(h1, h2, h3, h4, h5)');
+      const headingElms = dom.findAll(
+        '#main :where(h1, h2, h3, h4, h5, h6, h7)',
+      );
       const headingsInView = new Set();
       let isInitialLoad = true;
 
@@ -331,16 +333,7 @@ export function Events(Base) {
       this.#markSidebarCurrentPage();
       this.#initHeadings();
     }
-
-    /**
-     * Handle navigation events
-     *
-     * @param {undefined|"history"|"navigate"} source Type of navigation where
-     * undefined is initial load, "history" is forward/back, and "navigate" is
-     * user click/tap
-     * @void
-     */
-    onNavigate(source) {
+    _do_Navigate(source) {
       const { auto2top, topMargin } = this.config;
       const { path, query } = this.route;
       const activeSidebarElm = this.#markSidebarActiveElm();
@@ -350,7 +343,7 @@ export function Events(Base) {
         // Anchor link
         if (query.id) {
           const headingElm = dom.find(
-            `.markdown-section :where(h1, h2, h3, h4, h5)[id="${query.id}"]`,
+            `.markdown-section :where(h1, h2, h3, h4, h5, h6)[id="${query.id}"]`,
           );
 
           if (headingElm) {
@@ -386,6 +379,20 @@ export function Events(Base) {
       if (hasId || isNavigate) {
         this.#focusContent();
       }
+    }
+    /**
+     * Handle navigation events
+     *
+     * @param {undefined|"history"|"navigate"} source Type of navigation where
+     * undefined is initial load, "history" is forward/back, and "navigate" is
+     * user click/tap
+     * @void
+     */
+    onNavigate(source, path_changed = true) {
+      var wait_ms = path_changed ? 500 : 0;
+      setTimeout(() => {
+        this._do_Navigate(source);
+      }, wait_ms);
     }
 
     // Functions

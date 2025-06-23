@@ -291,6 +291,9 @@ export function Render(Base) {
       if (this.#last_sidebar_text == text) return;
       this.#last_sidebar_text = text;
 
+      if (window.bst_sidebar_render) {
+        text = window.bst_sidebar_render(text);
+      }
       dom.setHTML('.sidebar-nav', this.compiler.sidebar(text, maxLevel));
       if (window.bst_sidebar_rendered) {
         window.bst_sidebar_rendered();
@@ -304,8 +307,8 @@ export function Render(Base) {
       this.#addTextAsTitleAttribute('.sidebar-nav a');
 
       if (loadSidebar && activeEl) {
-        activeEl.parentNode.innerHTML +=
-          this.compiler.subSidebar(subMaxLevel) || '';
+        // activeEl.parentNode.innerHTML +=
+        //   this.compiler.subSidebar(subMaxLevel) || '';
       } else {
         this.compiler.resetToc();
       }

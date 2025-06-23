@@ -241,15 +241,39 @@ function install(hook, vm) {
     return newContent;
   }
 
+  var bst_force_loose = false;
+  function bst_sidebar_render(text) {
+    bst_force_loose = true;
+    return resolveDuplicateLinks(text, vm.compiler.config.alias);
+  }
   var other_li = null;
   var other_li_ul = null;
 
   function bst_sidebar_rendered() {
     console.log('bst_sidebar_rendered');
+    bst_force_loose = false;
     document.querySelectorAll('.sidebar-nav li').forEach(li => {
       if (li.querySelector('ul')) {
         li.classList.add('folder', 'collapse');
+
+        const has_p = li.querySelector(':scope>p');
+        if (!has_p) {
+          //添加一个p包裹
+          //console.log("li no p:",li,li.innerHTML)
+          for (const node of li.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+              const p = document.createElement('p');
+              p.textContent = node.nodeValue.trim();
+              li.replaceChild(p, node);
+              break;
+            }
+          }
+        }
+
         const hasLink = li.querySelector(':scope>p>a');
+        // if(!hasLink){
+        //   hasLink = li.querySelector(':scope>a');
+        // }
         if (hasLink) li.classList.add('hascontent');
       } else {
         li.classList.add('file');
@@ -283,6 +307,8 @@ function install(hook, vm) {
   });
   hook.init(_ => {
     window.bst_sidebar_rendered = bst_sidebar_rendered;
+    window.bst_sidebar_render = bst_sidebar_render;
+    window.bst_force_loose = bst_force_loose;
   });
 
   hook.doneEach((content, next) => {
@@ -335,12 +361,15 @@ function install(hook, vm) {
         window.Docsify.get(sidebar_file, false, vm.config.requestHeaders).then(
           function (sidebar_content) {
             resolveDuplicateLinks(sidebar_content, vm.compiler.config.alias);
+            next();
           },
+          next,
         );
         last_sidebar = sidebar_file;
+      } else {
+        next();
       }
     }
-    next();
   });
 }
 
