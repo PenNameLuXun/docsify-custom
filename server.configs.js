@@ -13,8 +13,8 @@ export const prodConfig = {
   open: false,
   port: 8080,
   server: {
-    baseDir: './bst_docs',
-    index: 'index1.html',
+    baseDir: './bst_docs/docs',
+    index: 'index_release.html',
   },
   snippet: false,
   ui: false,
@@ -25,9 +25,8 @@ export const devConfig = {
   ...prodConfig,
   files: [
     'CHANGELOG.md',
-    'bst_docs/**/*',
+    'bst_docs/docs/**/*',
     'dist/**/*',
-    '/home/groot/bst/c1200_docs/docs/**/*',
   ],
   port: 3000,
   rewriteRules,
@@ -35,6 +34,31 @@ export const devConfig = {
   reloadOnRestart: true,
   server: {
     ...prodConfig.server,
+    index: 'index_debug.html',
+    routes: {
+      '/changelog.md': path.resolve(__dirname, 'CHANGELOG.md'),
+      '/dist': path.resolve(__dirname, 'dist'),
+      '/node_modules': path.resolve(__dirname, 'node_modules'), // Required for automated Vue tests
+    },
+  },
+  snippet: true,
+};
+
+export const devOrgConfig = {
+  ...prodConfig,
+  files: [
+    'CHANGELOG.md',
+    'docs/**/*',
+    'dist/**/*',
+  ],
+  port: 3002,
+  rewriteRules,
+  reloadDebounce: 1000,
+  reloadOnRestart: true,
+  server: {
+    ...prodConfig.server,
+    baseDir: './docs',
+    index: 'index.html',
     routes: {
       '/changelog.md': path.resolve(__dirname, 'CHANGELOG.md'),
       '/dist': path.resolve(__dirname, 'dist'),

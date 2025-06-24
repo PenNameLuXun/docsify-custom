@@ -17,7 +17,11 @@ async function saveData(maxAge, expireKey) {
   INDEXES = Object.values(INDEXES).flatMap(innerData =>
     Object.values(innerData),
   );
+  if(!INDEXES.slug){
+    return;
+  }
   await db.search.bulkPut(INDEXES);
+  console.log("expireKey:",expireKey,INDEXES.slug)
   await db.expires.put({ key: expireKey, value: Date.now() + maxAge });
 }
 
@@ -325,6 +329,8 @@ export async function init(config, vm) {
           indexKey,
         );
         if (len === ++count) {
+          console.log("expireKeyexpireKey:",expireKey,config.maxAge)
+          //saveData(config.maxAge, expireKey);
           await saveData(config.maxAge, expireKey);
         }
       },

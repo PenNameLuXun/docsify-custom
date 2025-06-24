@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="plugins/prism.css" >
+  <!-- <link rel="stylesheet" href="vendor/themes/sidebar.min.css" /> -->
+  <link rel="stylesheet" href="vendor/themes/bst.css" />
+  <link rel="stylesheet" href="vendor/table.css" >
+  <link rel="stylesheet" href="vendor/themes/vue.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'C1200开发指南',
+      repo: '',
+      noEmoji: true,
+      relativePath: true,
+      loadNavbar:false,
+      loadSidebar: true,
+      // subMaxLevel: 3,
+      // maxLevel: 4,
+      mergeNavbar: true,
+      maxLevel: 3,
+      subMaxLevel: 1,
+      autoHeader: false,
+      auto2top:true,
+      basePath: '',
+      sidebarDisplayLevel: 3,
+
+      // nameLink: '',  //默认的路径
+      search: {
+        // 支持本地化
+        placeholder: {
+          '/zh-cn/': '搜索',
+          '/': '搜索'
+        },
+        noData: {
+        '/zh-cn/': '找不到结果',
+        '/': '找不到结果'
+        },
+      },
+      alias: {
+
+        '/.*/_sidebar.md': '/_sidebar.md', // See #301 防止全替换成子目录的_sidebar
+
+        //有重复匹配时越前面证明越优先
+        '/.*/_navbar.md': '/_navbar.md',
+        '/fados/(.*)':'/Hanhai/DB/middleware/bstos-pg-pre_release_fados4.3.1/zh-hans/$1',
+        '/fados-api/(.*)':'/Hanhai/DB/middleware/bstos-api-manual-pre_release_fados4.3.1/$1',
+        '/adas/(.*)':'/Hanhai/ADAS/middleware/documents-master/zh-hans/Hanhai-SDK-user-guide/run/$1',
+        '/adas-api(.*)':'/Hanhai/ADAS/middleware/documents-master/zh-hans/Hanhai-SDK-API-reference-manual/$1',
+      },
+      pagination: {
+        previousText: '上一章节',
+        // or
+        nextText: {
+          '/en/': 'NEXT',
+          '/': '下一章节'
+        },
+        crossChapter: true,
+        crossChapterText: true,
+      },
+      copyCode: {
+        buttonText: {
+          '/zh-cn/': '复制',
+          '/': '复制',
+        },
+        errorText: {
+          '/zh-cn/': '错误',
+          '/': '错误',
+        },
+        successText: {
+          '/zh-cn/': '已复制',
+          '/': '已复制',
+        },
+      },
+    }
+  </script>
+  <!--script src="vendor/docsify.js"></script-->
+  <!-- <script src="plugins/docsify.js"></script> -->
+  <!-- <script src="plugins/marked.min.js"></script> -->
+  <!-- <script src="plugins/docsify-marked.js"></script> -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/docsify.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/bst-sidebar.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/bst-content-sidebar.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/prism-support.js"></script>
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/front-matter.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/gtag.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/matomo.min.js"></script> -->
+  <!-- <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-markdown.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-nginx.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script> -->
+  <script src="plugins/search-tag.js"></script>
+  <script src="plugins/front-matter.js"></script>
+  <!-- <script src="plugins/docsify-sidebar-collapse.js"></script> -->
+  <!-- <script src="plugins/docsify-content-sidebar.js"></script> -->
+  <script src="plugins/docsify-pagination.min.js"></script>
+
+  <!-- <script src="plugins/docsify-copy-code.js"></script> -->
+
+  <!-- <script src="plugins/docsify-prism.min copy.js"></script> -->
+  <script src="plugins/prism.js"></script>
+  <script src="plugins/prism-dts.js"></script>
+
+  <script src="plugins/prism-c.js"></script>
+  <script src="plugins/prism-cpp.js"></script>
+  <script src="plugins/prism-bash.js"></script>
+  
+  
+  
+  <!-- <script src="plugins/docsify.min.js"></script> -->
+  
+  <!-- <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script> -->
+  <!-- <script src="//unpkg.com/docsify-slides/dist/docsify-slides.min.js"></script> -->
+</body>
+</html>

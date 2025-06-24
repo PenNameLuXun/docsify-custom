@@ -121,16 +121,10 @@ npm install
 
 ## 运行dev
 默认情况下将使用`./bst_doc`下的文档作为内容进行展示(查询`server.configs.js`文件)，所以如果`./bst_doc`目录下为空将看不到文档内容。
-因此需要提前将内容准备好，可以通过如下命令抓取c1200文档：
+因此需要提前将内容准备好，可以通过如下脚本抓取c1200文档：
 
 ```bash
-mkdir bst_docs
-cd ./bst_docs
-# 抓取 master 分支的文档
-repo init -u http://bstcd.stuffs.biz/docs/c1200_struct_docs.git --repo-url=http://bstcd.stuffs.biz/bsp/thirdparty/git_repo --no-repo-verify --repo-rev=stable
-
-# 将repo拉取道德docs中的内容移动到 bst_docs 目录
-mv ./docs/* ./
+./init_bst_docs.sh
 ```
 
 接下来就执行命令即可开始调试开发:
