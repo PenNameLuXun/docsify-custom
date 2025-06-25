@@ -336,47 +336,56 @@ export function Events(Base) {
     _do_Navigate(source) {
       const { auto2top, topMargin } = this.config;
       const { path, query } = this.route;
-      const activeSidebarElm = this.#markSidebarActiveElm();
-
+      const shouldAnimate = true
+      let headingElm = null
+      //source === 'navigate'
+      //const activeSidebarElm = this.#markSidebarActiveElm();
       // Note: Scroll position set by browser on forward/back (i.e. "history")
-      if (source !== 'history') {
-        // Anchor link
-        if (query.id) {
-          const headingElm = dom.find(
-            `.markdown-section :where(h1, h2, h3, h4, h5, h6)[id="${query.id}"]`,
-          );
-
-          if (headingElm) {
-            this.#watchNextScroll();
-            headingElm.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-          }
-        }
-        // User click/tap
-        else if (source === 'navigate') {
-          // Scroll to top
-          if (auto2top) {
-            document.scrollingElement.scrollTop = topMargin ?? 0;
-          }
+      //if (source !== 'history') 
+      
+      // Anchor link
+      if (query.id) {
+        headingElm = dom.find(
+          `.markdown-section :where(h1, h2, h3, h4, h5, h6)[id="${query.id}"]`,
+        );
+      }
+      else {
+        // Scroll to top
+        // if (auto2top)
+        // {
+        //   document.scrollingElement.scrollTop = topMargin ?? 0;
+        // }
+        headingElm = dom.find(
+          '.markdown-section :where(h1, h2, h3, h4, h5, h6)',
+        );
+      }
+      if (headingElm) {
+        this.#watchNextScroll();
+        headingElm.scrollIntoView({
+          behavior: shouldAnimate ? 'smooth' : 'auto',
+          block: 'start',
+        });
+      }else{
+        if (auto2top){
+          document.scrollingElement.scrollTop = topMargin ?? 0;
         }
       }
 
-      const isNavigate = source === 'navigate';
-      const hasId = 'id' in query;
-      const noSubSidebar = !activeSidebarElm?.querySelector('.app-sub-sidebar');
+      // const isNavigate = source === 'navigate';
+      // const hasId = 'id' in query;
+      // const noSubSidebar = !activeSidebarElm?.querySelector('.app-sub-sidebar');
 
-      // Clicked anchor link
-      const shouldCloseSidebar =
-        path === '/' || (isNavigate && (hasId || noSubSidebar));
+      // // Clicked anchor link
+      // const shouldCloseSidebar =
+      //   path === '/' || (isNavigate && (hasId || noSubSidebar));
 
-      if (shouldCloseSidebar && isMobile()) {
-        this.#toggleSidebar(false);
-      }
+      // if (shouldCloseSidebar && isMobile()) {
+      //   this.#toggleSidebar(false);
+      // }
 
       // Clicked anchor link or page load with anchor ID
-      if (hasId || isNavigate) {
+      //if (hasId || isNavigate) 
+      {
         this.#focusContent();
       }
     }
@@ -421,7 +430,16 @@ export function Events(Base) {
           dom.find('#main');
 
       // Move focus to content area
-      focusEl?.focus(settings);
+      //focusEl?.focus(settings);
+      //focusEl.focus({ preventScroll: settings.preventScroll });
+
+      // 👇 添加闪烁背景色效果
+      focusEl.classList.add('focus-blink');
+      focusEl.addEventListener(
+        'animationend',
+        () => focusEl.classList.remove('focus-blink'),
+        { once: true }
+      );
 
       return focusEl;
     }

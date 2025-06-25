@@ -27,10 +27,11 @@ function install(hook, vm) {
     if (el) {
       var sidebar = document.querySelector('.sidebar');
       var sidebar_toggle = document.querySelector('.sidebar-toggle');
-      var off_h = sidebar_toggle
-        ? sidebar_toggle.getBoundingClientRect().height
-        : 0;
-      off_h += 20;
+      // var off_h = sidebar_toggle
+      //   ? sidebar_toggle.getBoundingClientRect().height
+      //   : 0;
+      // off_h += 20;
+      var off_h = 20;
       var active = sidebar.querySelector('li.active');
       active && active.classList.remove('active');
       el.classList.add('active');
@@ -298,17 +299,54 @@ function install(hook, vm) {
     other_li = newLi;
   }
 
+  function on(el, type, handler) {
+    // isFn(type)
+    //   ? window.addEventListener(el, type)
+    //   : el.addEventListener(type, handler);
+    el.addEventListener(type, handler);
+  }
+  function btn(el) {
+    var toggle = function (_) { return document.body.classList.toggle('close'); };
+
+    //el = getNode(el);
+    if (el === null || el === undefined) {
+      return;
+    }
+
+    on(el, 'click', function (e) {
+      e.stopPropagation();
+      toggle();
+    });
+
+    // isMobile &&
+    //   on(
+    //     document.body,
+    //     'click',
+    //     function (_) { return body.classList.contains('close') && toggle(); }
+    //   );
+  }
+
   hook.mounted(_ => {
     // const div = dom.create('div');
     // div.id = 'gitalk-container';
     // const main = dom.getNode('#main');
     // div.style = `width: ${main.clientWidth}px; margin: 0 auto 20px;`;
     // dom.appendTo(dom.find('.content'), div);
+
+    const toggleElm = document.querySelector('button.sidebar-toggle');
+    console.log("toggleElm:",toggleElm)
+
+    btn(toggleElm, vm.router);
   });
   hook.init(_ => {
     window.bst_sidebar_rendered = bst_sidebar_rendered;
     window.bst_sidebar_render = bst_sidebar_render;
     window.bst_force_loose = bst_force_loose;
+
+    // const toggleElm = document.querySelector('button.sidebar-toggle');
+    // console.log("toggleElm:",toggleElm)
+
+    // btn(toggleElm, vm.router);
   });
 
   hook.doneEach((content, next) => {

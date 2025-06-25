@@ -92,7 +92,7 @@
 
   <body class="loading sidebar-chevron-right sidebar-group-box">
     <div id="app"></div>
-    <script src="//cdn.jsdelivr.net/npm/docsify-plugin-carbon@1"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/docsify-plugin-carbon@1"></script> -->
     <script>
       // Docsify configuration
       window.$docsify = {
@@ -196,38 +196,38 @@
             },
           },
         },
-        plugins: [
-          DocsifyCarbon.create('CEBI6KQE', 'docsifyjsorg'),
-          // Plugin: Footer
-          function (hook, vm) {
-            hook.beforeEach(html => {
-              if (/githubusercontent\.com/.test(vm.route.file)) {
-                url = vm.route.file
-                  .replace('raw.githubusercontent.com', 'github.com')
-                  .replace(/\/master/, '/blob/master')
-                  .replace(/\/main/, '/blob/main');
-              } else if (/jsdelivr\.net/.test(vm.route.file)) {
-                url = vm.route.file
-                  .replace('cdn.jsdelivr.net/gh', 'github.com')
-                  .replace('@main', '/blob/main');
-              } else {
-                url =
-                  'https://github.com/docsifyjs/docsify/blob/develop/docs/' +
-                  vm.route.file;
-              }
+        // plugins: [
+        //   DocsifyCarbon.create('CEBI6KQE', 'docsifyjsorg'),
+        //   // Plugin: Footer
+        //   function (hook, vm) {
+        //     hook.beforeEach(html => {
+        //       if (/githubusercontent\.com/.test(vm.route.file)) {
+        //         url = vm.route.file
+        //           .replace('raw.githubusercontent.com', 'github.com')
+        //           .replace(/\/master/, '/blob/master')
+        //           .replace(/\/main/, '/blob/main');
+        //       } else if (/jsdelivr\.net/.test(vm.route.file)) {
+        //         url = vm.route.file
+        //           .replace('cdn.jsdelivr.net/gh', 'github.com')
+        //           .replace('@main', '/blob/main');
+        //       } else {
+        //         url =
+        //           'https://github.com/docsifyjs/docsify/blob/develop/docs/' +
+        //           vm.route.file;
+        //       }
 
-              const footerHTML = [
-                '<hr>',
-                '<div style="display: flex; align-items: center; justify-content: space-between;">',
-                '  <span>Powered by <a href="/">Docsify.js</a></span>',
-                `  <a href="${url}" style="display: inline-flex; align-items: center; gap: 0.25em;">:memo: Edit Page</a>`,
-                '</div>',
-              ].join('\n');
+        //       const footerHTML = [
+        //         '<hr>',
+        //         '<div style="display: flex; align-items: center; justify-content: space-between;">',
+        //         '  <span>Powered by <a href="/">Docsify.js</a></span>',
+        //         `  <a href="${url}" style="display: inline-flex; align-items: center; gap: 0.25em;">:memo: Edit Page</a>`,
+        //         '</div>',
+        //       ].join('\n');
 
-              return html + footerHTML;
-            });
-          },
-        ],
+        //       return html + footerHTML;
+        //     });
+        //   },
+        // ],
       };
     </script>
     <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/docsify.min.js"></script>
@@ -236,17 +236,17 @@
     <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/front-matter.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/gtag.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/docsify@5/dist/plugins/matomo.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-markdown.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-nginx.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script> -->
 
     <!-- Vue: Development -->
     <!-- <script src="//cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script> -->
     <!-- <script src="//cdn.jsdelivr.net/npm/vue@3/dist/vue.runtime.global.js"></script> -->
 
     <!-- Vue: Production -->
-    <script src="//cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script> -->
     <!-- <script src="//cdn.jsdelivr.net/npm/vue@3/dist/vue.runtime.global.prod.js"></script> -->
   </body>
 </html>

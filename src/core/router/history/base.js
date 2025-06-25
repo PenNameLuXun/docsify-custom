@@ -50,6 +50,9 @@ export class History {
   getBasePath() {
     return this.config.basePath;
   }
+  getAlias(path){
+    return this.config.alias ? this.#getAlias(path, this.config.alias) : path;
+  }
 
   getFile(path = this.getCurrentPath(), isRelative) {
     const { config } = this;

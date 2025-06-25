@@ -34,7 +34,7 @@ export const devConfig = {
   reloadOnRestart: true,
   server: {
     ...prodConfig.server,
-    index: 'index_debug.html',
+    index: '../index_debug.html',
     routes: {
       '/changelog.md': path.resolve(__dirname, 'CHANGELOG.md'),
       '/dist': path.resolve(__dirname, 'dist'),

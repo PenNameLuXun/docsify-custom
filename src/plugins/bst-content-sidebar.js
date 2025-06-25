@@ -81,10 +81,10 @@ function isVisibleInAside(el, aside, off_h = 0) {
   // 判断 el 是否完全或部分出现在 aside 的可视范围内
   const verticallyVisible =
     elRect.bottom > asideRect.top && elRect.top < asideRect.bottom - off_h;
-  const horizontallyVisible =
-    elRect.right > asideRect.left && elRect.left < asideRect.right;
+  // const horizontallyVisible =
+  //   elRect.right > asideRect.left && elRect.left < asideRect.right;
 
-  return verticallyVisible && horizontallyVisible;
+  return verticallyVisible;
 }
 var cur_vm = null;
 function get_content_anchor() {
@@ -185,12 +185,12 @@ function active_hightlight(tocs, href = null) {
   // 添加高亮
   if (current_a) {
     current_a.classList.add('current_ctx_tag');
-    if (!isVisibleInAside(current_a, context_sidebar)) {
-      current_a.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }
+    // if (!isVisibleInAside(current_a, context_sidebar)) {
+    //   current_a.scrollIntoView({
+    //     behavior: 'smooth',
+    //     block: 'start',
+    //   });
+    // }
   }
 }
 function getTocs(vm) {
@@ -213,10 +213,11 @@ function install(hook, vm) {
       if (timer) {
         clearTimeout(timer);
       }
-      timer = setTimeout(() => {
+      //timer = setTimeout(() => 
+      {
         active_hightlight(getTocs(vm));
         timer = null;
-      }, 500);
+      //}, 5);
     });
   });
 

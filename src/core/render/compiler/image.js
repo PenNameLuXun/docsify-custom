@@ -4,6 +4,7 @@ import { isAbsolutePath, getPath, getParentPath } from '../../router/util.js';
 export const imageCompiler = ({ renderer, contentBase, router }) =>
   (renderer.image = ({ href, title, text }) => {
     let url = href;
+    
     const attrs = [];
 
     const { str, config } = getAndRemoveConfig(title);
@@ -36,6 +37,7 @@ export const imageCompiler = ({ renderer, contentBase, router }) =>
 
     if (!isAbsolutePath(href)) {
       url = getPath(contentBase, getParentPath(router.getCurrentPath()), href);
+      url = router.getAlias(url);
     }
 
     return /* html */ `<img src="${url}" data-origin="${href}" alt="${text}" ${attrs.join(

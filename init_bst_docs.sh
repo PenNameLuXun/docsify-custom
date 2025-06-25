@@ -8,4 +8,4 @@ repo sync
 
 cd ./docs
 
-cp ../index_* ./
+# cp ../index_* ./

@@ -51,6 +51,8 @@ export const linkCompiler = ({
     if (config.disabled) {
       attrs.push('disabled');
       href = 'javascript:void(0)';
+    }else{
+      href = router.getAlias(href)
     }
 
     if (config.class) {
