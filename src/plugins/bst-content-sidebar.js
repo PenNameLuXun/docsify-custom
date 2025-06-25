@@ -217,6 +217,7 @@ function install(hook, vm) {
       {
         active_hightlight(getTocs(vm));
         timer = null;
+      }
       //}, 5);
     });
   });
