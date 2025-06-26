@@ -417,6 +417,8 @@ function install(hook, vm) {
       } else {
         next();
       }
+    }else{
+      next();
     }
   });
 }

@@ -440,12 +440,14 @@ export function Events(Base) {
       //focusEl.focus({ preventScroll: settings.preventScroll });
 
       // 👇 添加闪烁背景色效果
-      focusEl.classList.add('focus-blink');
-      focusEl.addEventListener(
-        'animationend',
-        () => focusEl.classList.remove('focus-blink'),
-        { once: true }
-      );
+      if (focusEl) {
+        focusEl.classList.add('focus-blink');
+        focusEl.addEventListener(
+          'animationend',
+          () => focusEl.classList.remove('focus-blink'),
+          { once: true },
+        );
+      }
 
       return focusEl;
     }
