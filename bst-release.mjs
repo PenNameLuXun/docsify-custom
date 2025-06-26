@@ -28,7 +28,7 @@ async function copyIndexHtml() {
 
 // 拷贝 JS 文件
 async function copyJS() {
-  const jsFiles = await fg(['dist/*.js', 'dist/plugins/*.js']);
+  const jsFiles = await fg(['dist/*.js', 'vendor/plugins/*.js']);
   await fs.mkdir(pluginDest, { recursive: true });
 
   for (const file of jsFiles) {
@@ -43,7 +43,7 @@ async function copyJS() {
 async function copyCSS() {
   const cssFiles = await fg(cssSrcGlob);
   for (const file of cssFiles) {
-    const relPath = path.relative('src/themes', file); // e.g. bst/foo.css
+    const relPath = path.relative('dist/themes/bst', file); // e.g. bst/foo.css
     const dest = path.join(cssDest, relPath);
     await fs.mkdir(path.dirname(dest), { recursive: true });
     await fs.copyFile(file, dest);
