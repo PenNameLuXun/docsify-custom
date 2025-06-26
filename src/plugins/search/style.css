@@ -7,6 +7,7 @@
   /* --plugin-search-input-bg:color-mix(in srgb, #fff, #333 5%);
   --plugin-search-input-border-color:color-mix(in srgb, #fff, #333 10%);
   --plugin-search-input-border-radius:3px; */
+  --theme-color:#0b85d7;
 
   --plugin-search-input-bg:#fff;
   --plugin-search-input-border-color:color-mix(in srgb, #fff, #333 10%);
@@ -28,32 +29,50 @@
   margin: var(--plugin-search-margin);
   margin-bottom: 20px;
 }
-#__sidebar > section > div.input-wrap > input[type=search]{
+/* #__sidebar > section > div.input-wrap > input[type=search]{
   height: 50px;
-}
+} */
 input, label, select
 {
     vertical-align: middle;
 }
 .search input {
-    width: 100%;
-    padding-inline-end: 36px;
-    border: 1px solid var(--plugin-search-input-border-color);
+    /* width: 100%; */
+    width:288px;
+    height: 36px;
+    /* padding-inline-end: 36px; */
+    /* border: 1px solid var(--plugin-search-input-border-color);
     border-radius: var(--plugin-search-input-border-radius);
     background: var(--plugin-search-input-bg);
-    color: var(--plugin-search-input-color);
-    border-right-width: 0px;
+    color: var(--plugin-search-input-color); */
+    outline: none;
+    border:none;
+    /* border-right-width: 0px; */
+    margin: 5px -5px 5px 5px;
+}
+
+.search input:focus {
+  outline: none;
+  border: 1px solid #42b983; /* 绿色边框 */
+  border-radius: 3px;         /* 圆角 */
+  box-shadow: 0 0 5px rgba(66, 185, 131, 0.5); /* 内/外发光效果 */
+  transition: all 0.2s ease;
+  margin-right: -10px;
 }
 
 /* Input */
 /* ================================== */
 .search .input-wrap {
   position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, .07);
 }
 
 .search input::-webkit-search-decoration,
 .search input::-webkit-search-cancel-button {
   appearance: none;
+}
+.visually-hidden{
+  display: none;
 }
 
 .search .clear-button,
@@ -62,7 +81,7 @@ input, label, select
   display: flex;
   gap: 0.15em;
   position: absolute;
-  right: 7px;
+  right: 12px;
   top: 50%;
   opacity: 0;
   translate: 0 -50%;

@@ -23,7 +23,17 @@ function install(hook, vm) {
 
     return verticallyVisible && horizontallyVisible;
   }
+  function isSidebarVisibal() {
+    const sidebar = document.querySelector('.sidebar-nav');
+
+    function isVisible(el) {
+      return !!(el && el.offsetParent !== null);
+    }
+
+    return isVisible(sidebar); // true 表示可见
+  }
   function scrollToActive(el) {
+    if(!isSidebarVisibal())return;
     if (el) {
       var sidebar = document.querySelector('.sidebar');
       var sidebar_toggle = document.querySelector('.sidebar-toggle');
