@@ -13,7 +13,8 @@
   --sidebar-toggle-margin-block:20px;
   --duration-medium:250ms;
   --sidebar-toggle-width:12px;
-  /* --plugin-search-input-color: */
+  -webkit-focus-ring-color:#ff0000
+  /* --plugin-search-input-color11111111: */
 }
 #skip-to-content{
   display: none;
@@ -25,12 +26,14 @@
   100% { background-color: #ffffcc; }
 }
 
-.focus-blink {
-  animation: focusBlink 1s ease-in-out 1;
+:focus-visible {
+    outline: -webkit-focus-ring-color auto 1px;
+    outline:none;
 }
 
-
-
+.focus-blink {
+  animation: focusBlink 1s ease-in-out 2;
+}
 
 /* 1.base element style*/
 pre{

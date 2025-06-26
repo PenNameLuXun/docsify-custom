@@ -139,3 +139,12 @@ npm run dev
 # --no-verify避免 git hook 执行各种检查，不需要
 git commit -m "xxxx" --no-verify
 ```
+
+
+## 应用到文档
+```bash
+npm run build
+npm run bst_release
+```
+`npm run bst_release`执行后就会把`js文件`,`css文件`以及`bst_docs/index_debug.html`拷贝到`bst_docs/docs目录下`,查看`bst_docs/docs`下的修改文件，提交到仓库即可。
+

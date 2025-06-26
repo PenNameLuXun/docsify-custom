@@ -336,7 +336,7 @@ export function Events(Base) {
     _do_Navigate(source) {
       const { auto2top, topMargin } = this.config;
       const { path, query } = this.route;
-      const shouldAnimate = true
+      var shouldAnimate = true
       let headingElm = null
       //source === 'navigate'
       //const activeSidebarElm = this.#markSidebarActiveElm();
@@ -350,6 +350,7 @@ export function Events(Base) {
         );
       }
       else {
+        shouldAnimate=false;
         // Scroll to top
         // if (auto2top)
         // {
@@ -398,7 +399,12 @@ export function Events(Base) {
      * @void
      */
     onNavigate(source, path_changed = true) {
+      
+      const { query } = this.route;
       var wait_ms = path_changed ? 500 : 0;
+      if(!query.id){
+        wait_ms = 0;
+      }
       setTimeout(() => {
         this._do_Navigate(source);
       }, wait_ms);

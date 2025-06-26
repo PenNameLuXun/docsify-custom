@@ -64,6 +64,7 @@
     "eslint-plugin-jest": "^28.5.0",
     "eslint-plugin-playwright": "^2.1.0",
     "eslint-plugin-prettier": "^5.1.3",
+    "fast-glob": "^3.3.3",
     "glob": "^11.0.1",
     "globals": "^16.0.0",
     "husky": "^9.0.11",
@@ -84,7 +85,7 @@
   },
   "scripts": {
     "build:cover": "node build/cover.js",
-    "build:css": "postcss \"src/themes/*.css\" \"src/themes/**/[!_]*.css\" --base src/themes --dir dist/themes --map",
+    "build:css": "postcss \"src/themes/*.css\" \"src/themes/bst/*.css\" \"src/themes/**/[!_]*.css\" --base src/themes --dir dist/themes --map",
     "build:css:min": "cross-env NODE_ENV='production' npm run build:css -- --ext .min.css",
     "build:emoji": "node ./build/emoji.js",
     "build:js": "rollup -c",
@@ -120,6 +121,7 @@
     "test:update:snapshot": "npm run test:jest -- --updateSnapshot",
     "test": "run-s test:jest test:e2e",
     "watch:css": "run-p 'build:css -- --watch' 'build:css:min -- --watch'",
-    "watch:js": "npm run build:js -- --watch"
+    "watch:js": "npm run build:js -- --watch",
+    "bst_release": "node ./bst-release.mjs"
   }
 }
