@@ -117,7 +117,7 @@ function get_content_anchor() {
 }
 
 function getParentLevelHref(href, tocs) {
-  if (!tocs) return href;
+  if (!tocs || tocs.length == 0) return null;
   var node_depth = 1;
   var end_i = 0;
   for (var i = 0, len = tocs.length; i < len; i += 1) {
@@ -129,18 +129,48 @@ function getParentLevelHref(href, tocs) {
       break;
     }
   }
-  for (var i = end_i - 1; i >= 0; i -= 1) {
-    var item = tocs[i];
-    var depth = item.depth;
-    if (depth < node_depth) {
-      return item.slug;
+  if (end_i > 0) {
+    for (var i = end_i - 1; i >= 0; i -= 1) {
+      var item = tocs[i];
+      var depth = item.depth;
+      if (depth < node_depth) {
+        return item.slug;
+      }
+    }
+    return tocs[0].slug
+  }
+  return null;
+}
+
+function get_a_with_href(href,anchors){
+  for (var i = 0; i < anchors.length; i++) {
+    var a = anchors[i];
+    if (a.getAttribute('href') === href) {
+      return a;
     }
   }
-  return href;
+  return null
+}
+
+function getClosedNodeInContentSidebar(target_href,tocs){
+  var anchors = context_sidebar.querySelectorAll('a');
+  
+  var current_a = null;
+  
+  //如果没有找到，那么就搜寻target_href得祖先链接
+  var href = target_href;
+  while(href){
+    current_a = get_a_with_href(href,anchors);
+    if(current_a){
+      break;
+    }
+    href = getParentLevelHref(href, tocs);
+  }
+  return current_a
 }
 
 function active_hightlight(tocs, href = null) {
-  //console.log("active_hightlight:")
+ 
   var target_href = href;
   if (!target_href) {
     var node = get_content_anchor();
@@ -149,38 +179,14 @@ function active_hightlight(tocs, href = null) {
     }
     target_href = node.getAttribute('href');
   }
-  var anchors = context_sidebar.querySelectorAll('a');
 
-  // 移除旧的高亮
+  //移除旧的高亮
   var last_a = context_sidebar.querySelector('a.current_ctx_tag');
   if (last_a) {
     last_a.classList.remove('current_ctx_tag');
   }
-  var current_a = null;
-  for (var i = 0; i < anchors.length; i++) {
-    var a = anchors[i];
-    if (a.getAttribute('href') === target_href) {
-      current_a = a;
-      break;
-    }
-  }
 
-  if (!current_a) {
-    var new_target_href = null;
-    while (!current_a) {
-      new_target_href = getParentLevelHref(target_href, tocs);
-      if (new_target_href == target_href) {
-        break;
-      }
-      for (var i = 0; i < anchors.length; i++) {
-        var a = anchors[i];
-        if (a.getAttribute('href') === new_target_href) {
-          current_a = a;
-          break;
-        }
-      }
-    }
-  }
+  var current_a = getClosedNodeInContentSidebar(target_href,tocs);
 
   // 添加高亮
   if (current_a) {
@@ -213,12 +219,12 @@ function install(hook, vm) {
       if (timer) {
         clearTimeout(timer);
       }
-      //timer = setTimeout(() => 
+      timer = setTimeout(() => 
       {
         active_hightlight(getTocs(vm));
         timer = null;
       }
-      //}, 5);
+      ,100);
     });
   });
 

@@ -9,7 +9,7 @@ function getConfigAlias(url, vm) {
 
 var isAbsolutePath = function (path) {
   //return /(:|(\/{2}))/g.test(path);
-  console.log("Docsify:",window.Docsify)
+  // console.log("Docsify:",window.Docsify)
   return window.Docsify.util.isAbsolutePath(path)
 };
 

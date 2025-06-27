@@ -329,7 +329,7 @@ export async function init(config, vm) {
           indexKey,
         );
         if (len === ++count) {
-          console.log("expireKeyexpireKey:",expireKey,config.maxAge)
+          //console.log("expireKeyexpireKey:",expireKey,config.maxAge)
           //saveData(config.maxAge, expireKey);
           await saveData(config.maxAge, expireKey);
         }
