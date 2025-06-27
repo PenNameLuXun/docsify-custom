@@ -28,7 +28,7 @@ async function copyIndexHtml() {
 
 // 拷贝 JS 文件
 async function copyJS() {
-  const jsFiles = await fg(['dist/*.js', 'vendor/plugins/*.js']);
+  const jsFiles = await fg(['dist/*.js', 'dist/plugins/*.js']);
   await fs.mkdir(pluginDest, { recursive: true });
 
   for (const file of jsFiles) {
