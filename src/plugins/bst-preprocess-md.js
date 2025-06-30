@@ -19,7 +19,8 @@ var getParentPath = function (path) {
 
 
 function extractAndRemoveTagPs(content) {
-  const regex = /<p\s+hide="tags:\{([^}]*)\}"(?:\s*\/>|>[\s\S]*?<\/p>)/g;
+  //const regex = /<p\s+hide="tags:\{([^}]*)\}"(?:\s*\/>|>[\s\S]*?<\/p>)/g;
+  const regex = /<p\s+hide\s*=\s*["“”]\s*tags:\{([^}]*)\}\s*["“”]\s*(?:\s*\/>|>[\s\S]*?<\/p>)/g
   const matches = [];
   let match;
 
