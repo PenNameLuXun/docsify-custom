@@ -76,7 +76,21 @@ var css1 = `.docsify-pagination-container{display:flex;flex-wrap:wrap;justify-co
             .pagination-item--next svg{margin-left:.5em}
             .pagination-item--previous svg{margin-right:.5em}
             .pagination-item-title{font-size:1.6em}
-            .pagination-item-subtitle{text-transform:uppercase;opacity:.3}`
+            .pagination-item-subtitle{text-transform:uppercase;opacity:.3}
+            .markdown-section > .docsify-pagination-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
+            visibility: hidden;
+            }
+
+            .markdown-section > .docsify-pagination-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            visibility: visible;
+            }`
 
 
 function set_css() {
@@ -232,9 +246,27 @@ function install(hook, vm) {
       console.warn('Docsify pagination error:', err);
     }
   }
+    function onScrollShowPagination() {
+  var container = query('.docsify-pagination-container');
+  if (!container) return;
+
+  var scrollTop = window.scrollY || document.documentElement.scrollTop;
+  var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+  var scrollHeight = document.documentElement.scrollHeight;
+
+  if (scrollTop + windowHeight >= scrollHeight - 20) {
+    container.classList.add('visible');
+  } else {
+    container.classList.remove('visible');
+  }
+}
+
+
 
   hook.init(function(){
     set_css()
+    window.removeEventListener('scroll', onScrollShowPagination);
+    window.addEventListener('scroll', onScrollShowPagination);
   });
 
   
@@ -245,9 +277,9 @@ function install(hook, vm) {
   hook.ready(updatePagination)
 
   hook.doneEach(function(){
-    //setTimeout(() => {
-        updatePagination();
-    //}, 1000);
+    updatePagination();
+
+    onScrollShowPagination(); // 初始化判断一次
   });
 }
 
