@@ -1,4 +1,5 @@
 import { Docsify } from '../core/Docsify';
+import { noop } from '../core/util';
 
 /* bst sidebar custom */
 function install(hook, vm) {
@@ -252,16 +253,264 @@ function install(hook, vm) {
     return newContent;
   }
 
-  var bst_force_loose = false;
-  function bst_sidebar_render(text) {
-    bst_force_loose = true;
-    return resolveDuplicateLinks(text, vm.compiler.config.alias);
+
+  var components = []
+  // function parse_compoments(content,callback){
+
+  //   content = content.replace(
+  //     /^\s*\*\s*@@([^@]+?)@@.*$/gm,
+  //     (match, raw) => {
+
+  //       const parts = raw.trim().split('|');
+  //       console.log("parts:",parts,"raw:",raw);
+
+  //       // 防御性校验
+  //       if (parts.length !== 4) {
+  //         console.warn('[docsify-component] 非法组件定义:', raw);
+  //         return ''; // 删除该行
+  //       }
+
+  //       const [stringId, name, versionStr, pathStr] = parts;
+
+  //       const versions = versionStr.split(',').map(v => v.trim());
+  //       const paths = pathStr.split(',').map(p => p.trim());
+
+
+  //       var compose_sidebar;
+  //       //1.根据版本去fetch对应的文件夹中的sidebar文件内容
+  //       //2.将获取到的内容作为组件的二级目录填充到后续中
+  //       //var path = window.Docsify.util.getParentPath(route.path);
+  //       //const qs = window.Docsify.util.stringifyQuery(route.query, ['id']);
+  //       //var sidebar_file = vm.router.getFile(path + vm.config.loadSidebar) + qs;
+
+  //       var sidebar_file = paths[0]+"/_sidebar.md";
+
+  //       window.Docsify.get(sidebar_file, false, vm.config.requestHeaders)
+  //       .then(
+  //           function (sidebar_content) {
+  //             //resolveDuplicateLinks(sidebar_content, vm.compiler.config.alias);
+  //             noop;
+  //           },
+  //           noop,
+  //         );
+
+  //       components.push({
+  //         stringId,
+  //         name,
+  //         versions,
+  //         paths
+  //       });
+
+  //       // 核心：删除组件声明行（包括 @@）
+  //       return `* ${name}`;
+  //     }
+  //   );
+
+  //   return content
+  // }
+   var bst_force_loose = false;
+  // function bst_sidebar_render(text,callback=noop) {
+  //   text = parse_compoments(text,callback);
+  //   //bst_force_loose = true;
+  //   //return resolveDuplicateLinks(text, vm.compiler.config.alias);
+
+  //   callback(text)
+  // }
+
+function indentSidebar(md, level = 1) {
+  const prefix = '  '.repeat(level);
+  return md
+    .split('\n')
+    .map(line => line.trim() ? prefix + line : line)
+    .join('\n');
+}
+function injectComponentSidebars(text, components) {
+  components.forEach(comp => {
+    const placeholder = `<!-- BST-COMPONENT:${comp.stringId} -->`;
+
+
+    console.log(
+  'sidebars snapshot:',
+  JSON.parse(JSON.stringify(comp.sidebars))
+);
+    // 示例：只用第一个版本
+    const sidebar = comp.sidebars[comp.versions[0]] || '';
+
+    //console.log("comp.stringId:",comp.stringId,"sidebar:\n",sidebar,comp.versions[0],comp.sidebars[comp.versions[0]],comp.sidebars)
+
+    const injected = indentSidebar(sidebar, 1);
+
+    text = text.replace(placeholder, injected);
+  });
+
+  return text;
+}
+  function parse_compoments(content) {
+
+  const fetchTasks = []; // 保存所有异步任务
+
+  content = content.replace(
+    /^\s*\*\s*@@([^@]+?)@@.*$/gm,
+    (match, raw) => {
+
+      const parts = raw.split('|').map(p => p.trim());
+
+      if (parts.length !== 4) {
+        console.warn('[docsify-component] 非法组件定义:', raw);
+        return '';
+      }
+
+      const [stringId, name, versionStr, pathStr] = parts;
+
+      const versions = versionStr.split(',').map(v => v.trim());
+      const paths = pathStr.split(',').map(p => p.trim());
+
+      const component = {
+        stringId,
+        name,
+        versions,
+        paths,
+        vpaths:{},
+        sidebars: {} // version -> sidebar content
+      };
+
+      // paths.forEach((path,idx)=>{
+      //   vpaths[path]=
+      // });
+
+      // 为每个版本创建 fetch 任务
+      versions.forEach((version, idx) => {
+        component.vpaths[version]=component.paths[idx];
+        //const sidebarFile = paths[idx] + '/_sidebar.md';
+        const sidebarFile = "/overview/_sidebar.md"
+        // 包装成 Promise
+        const task = new Promise(resolve => {
+            const thenable = window.Docsify.get(sidebarFile, false, vm.config.requestHeaders);
+            
+            thenable.then(
+              (content) => {
+                component.sidebars[version] = content;
+                resolve(content); // 标准 Promise resolve
+              },
+              (err) => {
+                component.sidebars[version] = '';
+                console.warn(`[docsify-component] sidebar 加载失败: ${sidebarFile}`);
+                resolve(''); // 即使失败也 resolve
+              }
+            );
+          });
+        console.log("task instanceof Promise:",task instanceof Promise,window.Docsify.get); // 必须输出 true
+        fetchTasks.push(task);
+      });
+
+      components.push(component);
+
+      // 同步阶段只负责生成 Markdown
+      return `* ${name}\n<!-- BST-COMPONENT:${stringId} -->`;
+    }
+  );
+
+  return {
+    text: content,
+    promises: fetchTasks
+  };
+}
+
+  function bst_sidebar_render(text, callback) {
+
+    const result = parse_compoments(text);
+
+    // 没有异步任务，直接继续
+    if (!result.promises.length) {
+      callback(result.text);
+      return;
+    }
+
+    // 等待所有组件目录加载完成
+    Promise.all(result.promises)
+      .then(() => {
+        console.log('ALL sidebars:', JSON.parse(JSON.stringify(components)));
+        // 所有 sidebar 已就绪
+      const finalText = injectComponentSidebars(
+        result.text,
+        components
+      );
+      //console.log("finalText:\n",finalText);
+        // 所有 sidebar 已就绪
+        callback(finalText);
+      })
+      .catch(err => {
+        console.error('[docsify-component] sidebar 加载异常', err);
+        // 即使异常，也不能阻断 Docsify
+        callback(result.text);
+      });
   }
+
+  function addVersionSelectorToTopLevelLi() {
+    const topLis = document.querySelectorAll('.sidebar-nav > ul > li');
+
+    topLis.forEach(li => {
+      // 防止重复添加
+      if (li.querySelector('.version-select')) return;
+
+      const p = li.querySelector(':scope > p');
+      if (!p) return;
+
+      p.nodeValue;
+      //console.log("p:",p,"textContent:",p.textContent);
+      var component = vm.compiler.config.components[p.textContent];
+      if(component){
+        console.log("component = ",component);
+        const cname = p.textContent;
+        p.textContent=component.title;
+
+        if(component.versions){
+          const select = document.createElement('select');
+          select.className = 'version-select';
+
+          Object.entries(component.versions).forEach(([version, path]) => {
+            const option = document.createElement('option');
+            option.value = version;        // v1.0.0
+            option.textContent = version;  // 显示版本号
+            option.dataset.path = path;    // 保存文档路径（非常关键）
+            option.dataset.cname = cname  //组件名字
+            select.appendChild(option);
+          });
+          // 阻止触发折叠
+          select.addEventListener('click', e => e.stopPropagation());
+
+          // 版本切换逻辑（示例）
+          
+          select.addEventListener('change', e => {
+            const selectEl = e.target;
+            const option = selectEl.selectedOptions[0]; // 当前选中的 option
+
+            const version = option.value;
+            const path = option.dataset.path;
+            const cname = option.dataset.cname;
+
+            console.log('component:', cname);
+            console.log('version:', version);
+            console.log('path:', path);
+          });
+
+          p.appendChild(select);
+        }
+      }
+      
+      
+
+      
+
+
+      
+    });
+}
   var other_li = null;
   var other_li_ul = null;
 
   function bst_sidebar_rendered() {
-    console.log('bst_sidebar_rendered');
+    console.log('bst_sidebar_rendered,base path:',vm.compiler.config);
     bst_force_loose = false;
     document.querySelectorAll('.sidebar-nav li').forEach(li => {
       if (li.querySelector('ul')) {
@@ -307,6 +556,8 @@ function install(hook, vm) {
     firstUl.appendChild(newLi);
     newLi.classList.add('folder', 'collapse');
     other_li = newLi;
+    /* 新增：版本选择框 */
+    addVersionSelectorToTopLevelLi();
   }
 
   function on(el, type, handler) {

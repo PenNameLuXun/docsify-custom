@@ -29,6 +29,7 @@ export const taskListItemCompiler = ({ renderer }) =>
     text += this.parser?.parse(item.tokens, !!item.loose);
 
     const isTaskItem = /^(<input.*type="checkbox"[^>]*>)/.test(text);
+    //console.log("list text :",text)
     const html = isTaskItem
       ? /* html */ `<li class="task-list-item"><label>${text}</label></li>`
       : /* html */ `<li>${text}</li>`;

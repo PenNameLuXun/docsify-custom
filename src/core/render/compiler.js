@@ -58,6 +58,7 @@ export class Compiler {
         }
 
         if (isPrimitive(text)) {
+          //console.log("text:",text,compile,compile==this._marked)
           html = compile(text);
         } else {
           this.toc = [];

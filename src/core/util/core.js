@@ -52,6 +52,7 @@ export function isFn(obj) {
  * @returns {Boolean} True if the passed-in url is external
  */
 export function isExternal(url) {
+  console.log("url is :",url);
   const match = url.match(
     /^([^:/?#]+:)?(?:\/{2,}([^/?#]*))?([^?#]+)?(\?[^#]*)?(#.*)?/,
   );

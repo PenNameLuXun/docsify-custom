@@ -291,13 +291,15 @@ export function Render(Base) {
       if (this.#last_sidebar_text == text) return;
       this.#last_sidebar_text = text;
 
-      if (window.bst_sidebar_render) {
-        text = window.bst_sidebar_render(text);
-      }
+      
+
+      var my_callback = function(text){
       dom.setHTML('.sidebar-nav', this.compiler.sidebar(text, maxLevel));
       if (window.bst_sidebar_rendered) {
         window.bst_sidebar_rendered();
       }
+
+      
 
       sidebarToggleEl.setAttribute('aria-expanded', !isMobile());
 
@@ -343,6 +345,13 @@ export function Render(Base) {
           .querySelector(':scope > p:not(:has(> *))')
           ?.classList.add('group-title');
       });
+      }
+
+      if (window.bst_sidebar_render) {
+        //text = window.bst_sidebar_render(text,my_callback);
+        window.bst_sidebar_render(text,my_callback.bind(this));
+      }
+      //------------------------------------------
     }
 
     _bindEventOnRendered(activeEl) {
@@ -367,8 +376,9 @@ export function Render(Base) {
       }
 
       const html = this.compiler.compile(text);
-
-      ['.app-nav', '.app-nav-merged'].forEach(selector => {
+      console.log("html:",html);
+      // ['.app-nav', '.app-nav-merged'].forEach(selector => {
+        ['.app-nav'].forEach(selector => {
         dom.setHTML(selector, html);
         this.#addTextAsTitleAttribute(`${selector} a`);
       });

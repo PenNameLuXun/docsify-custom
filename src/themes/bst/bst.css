@@ -446,4 +446,22 @@ main > .sidebar-toggle{
   }
 }
 
+.sidebar-nav .version-select {
+  font-size: 10.5px;
+  padding: 0 4px;
+
+  border: none;
+  background: transparent;
+  color: #888;
+
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* hover 才提示可交互 */
+.sidebar-nav .version-select:hover {
+  text-decoration: underline;
+  color: #444;
+}
 

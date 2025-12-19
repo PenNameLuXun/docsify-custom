@@ -20,7 +20,7 @@
       repo: '',
       noEmoji: true,
       relativePath: true,
-      loadNavbar:false,
+      loadNavbar:true,
       loadSidebar: true,
       // subMaxLevel: 3,
       // maxLevel: 4,
@@ -78,6 +78,33 @@
           '/zh-cn/': '已复制',
           '/': '已复制',
         },
+      },
+            components: {
+        c1200快速上手: {
+          title: 'c1200快速上手?',
+          versions: {
+            'v1.0.0': 'components/c1200/v1.0.0',
+            'v1.0.1': 'components/c1200/v1.0.1',
+            'v1.1.0': 'components/c1200/v1.1.0'
+          },
+          defaultVersion: 'v1.0.1'
+        },
+
+        quickstart: {
+          title: 'C1200 快速上手',
+          versions: {
+            'v1.0.1': 'components/quickstart/v1.0.1'
+          }
+        },
+
+        板级支持包: {
+          title: '板级支持包吗',
+          versions: {
+            'v1.0.0': 'components/board/v1.0.0',
+            'v2.0.0': 'components/board/v2.0.0'
+          },
+          defaultVersion: 'v2.0.0'
+        }
       },
     }
   </script>
