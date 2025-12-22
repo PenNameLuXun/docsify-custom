@@ -263,6 +263,24 @@ function install(hook, vm) {
   var g_components = []
   var g_components_user_config={}
 
+  function save_compoients(){
+    localStorage.setItem('componentInfo', JSON.stringify(g_components_user_config));
+  }
+
+  function load_compoients(){
+    const str = localStorage.getItem('componentInfo');
+    console.log("str:",str)
+
+    g_components_user_config = str ? JSON.parse(str) : null;
+
+    if(!g_components_user_config){
+      console.log("init  g_components_user_config to object.");
+      g_components_user_config={};
+    }
+
+    console.log("g_components_user_config:",g_components_user_config)
+  }
+
    var bst_force_loose = false;
   // function bst_sidebar_render(text,callback=noop) {
   //   text = parse_compoments(text,callback);
@@ -294,7 +312,8 @@ function injectComponentSidebars(text, components) {
 //   JSON.parse(JSON.stringify(comp.sidebars))
 // );
     // 示例：只用第一个版本
-    const sidebar = comp.sidebars[comp.versions[0]] || '';
+    const current_version = g_components_user_config[comp.stringId].current_user_version
+    const sidebar = comp.sidebars[current_version] || '';
 
     //console.log("comp.stringId:",comp.stringId,"sidebar:\n",sidebar,comp.versions[0],comp.sidebars[comp.versions[0]],comp.sidebars)
 
@@ -335,12 +354,14 @@ function injectComponentSidebars(text, components) {
       };
 
       let current_user_version = versions[0];
-      g_components_user_config[stringId]={};
-      if(g_components_user_config[stringId] && g_components_user_config[stringId].version){
-        current_user_version=g_components_user_config[stringId]["current_user_version"]
-        if(!versions.contains(current_user_version)){
-          current_user_version =versions[0];
-        }
+      //g_components_user_config[stringId]={};
+      console.log("g_components_user_config[stringId].current_user_version:",stringId,g_components_user_config[stringId].current_user_version)
+      if(g_components_user_config[stringId] && g_components_user_config[stringId].current_user_version){
+        current_user_version=g_components_user_config[stringId].current_user_version;
+        console.log("current_user_version = ",current_user_version)
+        // if(!versions.contains(current_user_version)){
+        //   current_user_version = versions[0];
+        // }
       }else{
         g_components_user_config[stringId]["current_user_version"] = current_user_version;
       }
@@ -350,12 +371,13 @@ function injectComponentSidebars(text, components) {
 
       // 为每个版本创建 fetch 任务
       versions.forEach((version, idx) => {
-        g_components_user_config[stringId][version]={}
+        if(!g_components_user_config[stringId][version]){
+          g_components_user_config[stringId][version] = {}
+        }
         var abs_path = component.paths[idx];
         //console.log("abs_path:",abs_path)
         component.vpaths[version]=abs_path;
         const sidebarFile = paths[idx] + '/_sidebar.md';
-        //const sidebarFile = "/overview/_sidebar.md"
         // 包装成 Promise
         //if(current_user_version == version)
           {
@@ -528,8 +550,24 @@ function injectComponentSidebars(text, components) {
 
             //从当前切换的区域内查找可能存在的当前路径，如果不存在，那么跳转到当前区域的第一个文件去
             hight_sidebar_tag_by_current_path(pp_node.querySelectorAll('.file'),true);
+
+            save_compoients();
             
           });
+      
+      select_nodes.forEach(selectEl => {
+        const cid = selectEl.selectedOptions[0].dataset.cid;
+        //console.log("cid:",cid)
+        if (!cid) return;
+
+        const config = g_components_user_config[cid];
+        //console.log("config.current_user_version:",config.current_user_version)
+        if (!config || !config.current_user_version) return;
+
+        selectEl.value = config.current_user_version;
+      });
+
+
     })
 
     return;
@@ -668,6 +706,10 @@ function injectComponentSidebars(text, components) {
     window.bst_sidebar_rendered = bst_sidebar_rendered;
     window.bst_sidebar_render = bst_sidebar_render;
     window.bst_force_loose = bst_force_loose;
+
+    load_compoients();
+
+    
 
     // const toggleElm = document.querySelector('button.sidebar-toggle');
     // console.log("toggleElm:",toggleElm)
