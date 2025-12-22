@@ -350,6 +350,8 @@ export function Render(Base) {
       if (window.bst_sidebar_render) {
         //text = window.bst_sidebar_render(text,my_callback);
         window.bst_sidebar_render(text,my_callback.bind(this));
+      }else{
+        my_callback(text)
       }
       //------------------------------------------
     }

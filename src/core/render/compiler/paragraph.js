@@ -1,8 +1,68 @@
 import { helper as helperTpl } from '../tpl.js';
 
+
+
+function parase_component(raw) {
+  const parts = raw.split('|').map(p => p.trim());
+
+  if (parts.length !== 4) {
+    console.warn('[docsify-component] 非法组件定义:', raw);
+    return '';
+  }
+
+  const [stringId, name, versionStr, pathStr] = parts;
+
+  const versions = versionStr
+    ? versionStr.split(',').map(v => v.trim()).filter(Boolean)
+    : [];
+
+  const paths = pathStr
+    ? pathStr.split(',').map(p => p.trim()).filter(Boolean)
+    : [];
+
+  if (versions.length !== paths.length) {
+    console.warn(
+      `[docsify-component] versions 与 paths 数量不一致:`,
+      { stringId, versions, paths }
+    );
+    return '';
+  }
+
+  // 生成 option
+  let optionsHtml = '';
+  versions.forEach((version, index) => {
+    const path = paths[index];
+    optionsHtml += `
+      <option 
+        value="${version}"
+        data-path="${path}"
+        data-cname="${name}"
+        data-cid="${stringId}">
+        ${version}
+      </option>`;
+  });
+
+  // 如果没有版本，则不生成 select（可选策略）
+  const selectHtml = versions.length
+    ? `<select class="version-select">
+         ${optionsHtml}
+       </select>`
+    : '';
+
+  // 在 p 元素上标识 stringId
+  return `
+    <p class="folder group"
+       data-string-id="${stringId}">
+      <span class="component-name">${name}</span>
+      ${selectHtml}
+    </p>
+  `;
+}
+
 export const paragraphCompiler = ({ renderer }) =>
   (renderer.paragraph = function ({ tokens }) {
     const text = this.parser.parseInline(tokens);
+    //console.log("text:",text,renderer,tokens);
     
     let result;
 
@@ -11,9 +71,9 @@ export const paragraphCompiler = ({ renderer }) =>
     } else if (text.startsWith('?&gt;')) {
       result = helperTpl('callout tip', text);
     } else if(text.startsWith('@@')){
-      console.log("paragraph text:",text,tokens);
       const text1 = text.slice(2).trim();
-      return /* html */ `<p class="folder group">${text1}</p>`;
+      //console.log("text1:",text1);
+      return parase_component(text1);
     } 
     else {
       result = /* html */ `<p>${text}</p>`;

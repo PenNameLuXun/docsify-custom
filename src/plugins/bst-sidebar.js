@@ -235,16 +235,22 @@ function install(hook, vm) {
     const regex = /\[[^\]]+]\(([^)]+?)\)/g; // 捕获所有 [xxx](path.xxx) 样式的链接
     const pathCount = {};
 
+    function removeHash(url) {
+      return url.split('#')[0];
+    }
+
     const newContent = content.replace(regex, (match, path) => {
+      path = removeHash(path)
       if (!pathCount[path]) {
         pathCount[path] = 1;
         return match;
       }
 
       const count = pathCount[path]++;
+      
       const newPath = path.replace(/(\.[^./?#]+)([#?]?.*)$/, `_${count}$1$2`);
 
-      console.log('replace path = ', path, newPath);
+      //console.log('replace path = ', path, newPath);
 
       aliasMap[newPath.replace('.md', '')] = path.replace('.md', '');
       return match.replace(path, newPath);
@@ -254,60 +260,9 @@ function install(hook, vm) {
   }
 
 
-  var components = []
-  // function parse_compoments(content,callback){
+  var g_components = []
+  var g_components_user_config={}
 
-  //   content = content.replace(
-  //     /^\s*\*\s*@@([^@]+?)@@.*$/gm,
-  //     (match, raw) => {
-
-  //       const parts = raw.trim().split('|');
-  //       console.log("parts:",parts,"raw:",raw);
-
-  //       // 防御性校验
-  //       if (parts.length !== 4) {
-  //         console.warn('[docsify-component] 非法组件定义:', raw);
-  //         return ''; // 删除该行
-  //       }
-
-  //       const [stringId, name, versionStr, pathStr] = parts;
-
-  //       const versions = versionStr.split(',').map(v => v.trim());
-  //       const paths = pathStr.split(',').map(p => p.trim());
-
-
-  //       var compose_sidebar;
-  //       //1.根据版本去fetch对应的文件夹中的sidebar文件内容
-  //       //2.将获取到的内容作为组件的二级目录填充到后续中
-  //       //var path = window.Docsify.util.getParentPath(route.path);
-  //       //const qs = window.Docsify.util.stringifyQuery(route.query, ['id']);
-  //       //var sidebar_file = vm.router.getFile(path + vm.config.loadSidebar) + qs;
-
-  //       var sidebar_file = paths[0]+"/_sidebar.md";
-
-  //       window.Docsify.get(sidebar_file, false, vm.config.requestHeaders)
-  //       .then(
-  //           function (sidebar_content) {
-  //             //resolveDuplicateLinks(sidebar_content, vm.compiler.config.alias);
-  //             noop;
-  //           },
-  //           noop,
-  //         );
-
-  //       components.push({
-  //         stringId,
-  //         name,
-  //         versions,
-  //         paths
-  //       });
-
-  //       // 核心：删除组件声明行（包括 @@）
-  //       return `* ${name}`;
-  //     }
-  //   );
-
-  //   return content
-  // }
    var bst_force_loose = false;
   // function bst_sidebar_render(text,callback=noop) {
   //   text = parse_compoments(text,callback);
@@ -316,6 +271,11 @@ function install(hook, vm) {
 
   //   callback(text)
   // }
+
+  function do_resolveDuplicateLinks(text){
+    bst_force_loose = true;
+    return resolveDuplicateLinks(text, vm.compiler.config.alias);
+  }
 
 function indentSidebar(md, level = 1) {
   const prefix = '  '.repeat(level);
@@ -329,10 +289,10 @@ function injectComponentSidebars(text, components) {
     const placeholder = `<!-- BST-COMPONENT:${comp.stringId} -->`;
 
 
-    console.log(
-  'sidebars snapshot:',
-  JSON.parse(JSON.stringify(comp.sidebars))
-);
+//     console.log(
+//   'sidebars snapshot:',
+//   JSON.parse(JSON.stringify(comp.sidebars))
+// );
     // 示例：只用第一个版本
     const sidebar = comp.sidebars[comp.versions[0]] || '';
 
@@ -374,22 +334,64 @@ function injectComponentSidebars(text, components) {
         sidebars: {} // version -> sidebar content
       };
 
-      // paths.forEach((path,idx)=>{
-      //   vpaths[path]=
-      // });
+      let current_user_version = versions[0];
+      g_components_user_config[stringId]={};
+      if(g_components_user_config[stringId] && g_components_user_config[stringId].version){
+        current_user_version=g_components_user_config[stringId]["current_user_version"]
+        if(!versions.contains(current_user_version)){
+          current_user_version =versions[0];
+        }
+      }else{
+        g_components_user_config[stringId]["current_user_version"] = current_user_version;
+      }
+
+      g_components_user_config[stringId]["raw"]=raw
+      
 
       // 为每个版本创建 fetch 任务
       versions.forEach((version, idx) => {
-        component.vpaths[version]=component.paths[idx];
-        //const sidebarFile = paths[idx] + '/_sidebar.md';
-        const sidebarFile = "/overview/_sidebar.md"
+        g_components_user_config[stringId][version]={}
+        var abs_path = component.paths[idx];
+        //console.log("abs_path:",abs_path)
+        component.vpaths[version]=abs_path;
+        const sidebarFile = paths[idx] + '/_sidebar.md';
+        //const sidebarFile = "/overview/_sidebar.md"
         // 包装成 Promise
+        //if(current_user_version == version)
+          {
         const task = new Promise(resolve => {
             const thenable = window.Docsify.get(sidebarFile, false, vm.config.requestHeaders);
             
             thenable.then(
               (content) => {
+                //针对content中的路径还得更新成
+                //...todo
+                function replace_path(content, abs_path) {
+                  // 捕获 Markdown 中 [text](path) 的链接
+                  const regex = /\[([^\]]+)]\(([^)]+?)\)/g;
+
+                  const newContent = content.replace(regex, (match, text, path) => {
+                    
+                    // 如果 path 已经是绝对 URL 或以 / 开头，不加前缀
+                    if (/^(https?:)?\/\//.test(path) || path.startsWith('/')) {
+                      return match;
+                    }
+
+                    // 拼接绝对路径
+                    const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
+
+                    //console.log("1path:",path,`[${text}](${newPath})`)
+                    // 返回替换后的 Markdown
+                    return `[${text}](${newPath})`;
+                  });
+
+                  return newContent;
+                }
+
+                content=replace_path(content,abs_path);
+
                 component.sidebars[version] = content;
+                g_components_user_config[stringId][version]["content"] = content;
                 resolve(content); // 标准 Promise resolve
               },
               (err) => {
@@ -399,14 +401,16 @@ function injectComponentSidebars(text, components) {
               }
             );
           });
-        console.log("task instanceof Promise:",task instanceof Promise,window.Docsify.get); // 必须输出 true
+        //console.log("task instanceof Promise:",task instanceof Promise,window.Docsify.get); // 必须输出 true
         fetchTasks.push(task);
+        }
       });
 
-      components.push(component);
+      g_components.push(component);
 
       // 同步阶段只负责生成 Markdown
-      return `* ${name}\n<!-- BST-COMPONENT:${stringId} -->`;
+      //console.log("raw:",raw);
+      return `* @@${raw}\n<!-- BST-COMPONENT:${stringId} -->`;
     }
   );
 
@@ -420,33 +424,116 @@ function injectComponentSidebars(text, components) {
 
     const result = parse_compoments(text);
 
+    function do_call_back(text){
+      vm.compiler.renderer.options["force_loose"]=true
+      callback(text);
+      vm.compiler.renderer.options["force_loose"]=false
+    }
+
     // 没有异步任务，直接继续
     if (!result.promises.length) {
-      callback(result.text);
+      var finalText=do_resolveDuplicateLinks(result.text);
+      do_call_back(finalText);
       return;
     }
 
     // 等待所有组件目录加载完成
     Promise.all(result.promises)
       .then(() => {
-        console.log('ALL sidebars:', JSON.parse(JSON.stringify(components)));
+        //console.log('ALL sidebars:', JSON.parse(JSON.stringify(components)));
         // 所有 sidebar 已就绪
-      const finalText = injectComponentSidebars(
+      var finalText = injectComponentSidebars(
         result.text,
-        components
+        g_components
       );
-      //console.log("finalText:\n",finalText);
+      
+      console.log("parse_compoments finished:\n",vm.compiler.renderer);
         // 所有 sidebar 已就绪
-        callback(finalText);
+        finalText = do_resolveDuplicateLinks(finalText);
+        do_call_back(finalText);
       })
       .catch(err => {
         console.error('[docsify-component] sidebar 加载异常', err);
         // 即使异常，也不能阻断 Docsify
-        callback(result.text);
+        finalText = do_resolveDuplicateLinks(result.text);
+        do_call_back(finalText);
       });
   }
 
+
+  function add_has_context_class(li_list = document.querySelectorAll('.sidebar-nav li')){
+    li_list.forEach(li => {
+      if (li.querySelector('ul')) {
+        li.classList.add('folder', 'collapse');
+
+        const has_p = li.querySelector(':scope>p');
+        if (!has_p) {
+          //添加一个p包裹
+          //console.log("li no p:",li,li.innerHTML)
+          for (const node of li.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+              const p = document.createElement('p');
+              p.textContent = node.nodeValue.trim();
+              li.replaceChild(p, node);
+              break;
+            }
+          }
+        }
+
+        const hasLink = li.querySelector(':scope>p>a');
+        if (hasLink) li.classList.add('hascontent');
+      } else {
+        li.classList.add('file');
+      }
+    });
+  }
+
   function addVersionSelectorToTopLevelLi() {
+    const select_nodes = document.querySelectorAll('.version-select');
+    select_nodes.forEach(select=>{
+      select.addEventListener('click', e => e.stopPropagation());
+      select.addEventListener('change', e => {
+            const selectEl = e.target;
+            const option = selectEl.selectedOptions[0]; // 当前选中的 option
+
+            const version = option.value;
+            const path = option.dataset.path;
+            const cname = option.dataset.cname;
+            const cid = option.dataset.cid;
+
+            g_components_user_config[cid]["current_user_version"]= version;
+            console.log('component:', cname,cid);
+            console.log('version:', version);
+            console.log('path:', path);
+            console.log("g_components_user_config for ",cid,":",g_components_user_config[cid])
+
+
+            const new_sidebar  = g_components_user_config[cid][version].content;
+
+            const new_ul_html = vm.compiler.sidebar(new_sidebar,5);
+            function replaceFirstUl(parentEl, newUlHtml) {
+              if (!parentEl) return;
+
+              const ul = parentEl.querySelector(':scope > ul');
+              if (!ul) return;
+
+              ul.outerHTML = newUlHtml;
+            }
+            const pp_node = selectEl.parentNode.parentNode;
+
+            replaceFirstUl(pp_node,new_ul_html);
+
+            //为新添加的节点设置对应的 class 名字（folder file collapse），从而实现 sidebar 区域文件夹的收起和折叠
+            add_has_context_class(pp_node.querySelectorAll('li'));
+
+            //从当前切换的区域内查找可能存在的当前路径，如果不存在，那么跳转到当前区域的第一个文件去
+            hight_sidebar_tag_by_current_path(pp_node.querySelectorAll('.file'),true);
+            
+          });
+    })
+
+    return;
+
     const topLis = document.querySelectorAll('.sidebar-nav > ul > li');
 
     topLis.forEach(li => {
@@ -497,48 +584,12 @@ function injectComponentSidebars(text, components) {
           p.appendChild(select);
         }
       }
-      
-      
-
-      
-
-
-      
     });
 }
   var other_li = null;
   var other_li_ul = null;
 
-  function bst_sidebar_rendered() {
-    console.log('bst_sidebar_rendered,base path:',vm.compiler.config);
-    bst_force_loose = false;
-    document.querySelectorAll('.sidebar-nav li').forEach(li => {
-      if (li.querySelector('ul')) {
-        li.classList.add('folder', 'collapse');
-
-        const has_p = li.querySelector(':scope>p');
-        if (!has_p) {
-          //添加一个p包裹
-          //console.log("li no p:",li,li.innerHTML)
-          for (const node of li.childNodes) {
-            if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-              const p = document.createElement('p');
-              p.textContent = node.nodeValue.trim();
-              li.replaceChild(p, node);
-              break;
-            }
-          }
-        }
-
-        const hasLink = li.querySelector(':scope>p>a');
-        // if(!hasLink){
-        //   hasLink = li.querySelector(':scope>a');
-        // }
-        if (hasLink) li.classList.add('hascontent');
-      } else {
-        li.classList.add('file');
-      }
-    });
+  function add_default_other_container(){
     // 找到类名是 sidebar-nav 的第一个元素
     const sidebarNav = document.querySelector('.sidebar-nav');
     // 找到 sidebar-nav 下的第一个 ul
@@ -556,8 +607,22 @@ function injectComponentSidebars(text, components) {
     firstUl.appendChild(newLi);
     newLi.classList.add('folder', 'collapse');
     other_li = newLi;
+  }
+
+  function bst_sidebar_rendered() {
+    console.log('bst_sidebar_rendered,base path:',vm.compiler.config);
+
+    bst_force_loose = false;
+    
+    add_has_context_class();
+
+
+    add_default_other_container()
+
     /* 新增：版本选择框 */
     addVersionSelectorToTopLevelLi();
+
+    hight_sidebar_tag_by_current_path();
   }
 
   function on(el, type, handler) {
@@ -610,7 +675,7 @@ function injectComponentSidebars(text, components) {
     // btn(toggleElm, vm.router);
   });
 
-  hook.doneEach((content, next) => {
+  function hight_sidebar_tag_by_current_path(top_node = document.querySelectorAll('.sidebar-nav .file'),choose_first_file_if_not_found = false){
     var current_li = null;
     var hash = decodeURI(vm.router.toURL(vm.router.getCurrentPath()));
     var curFileName = vm.router.parse().file;
@@ -619,29 +684,54 @@ function injectComponentSidebars(text, components) {
       ? vm.compiler.cacheTOC[curFileName][0]
       : null;
     var title = context_header ? context_header.title : fileNameOnly;
-    document.querySelectorAll('.sidebar-nav li').forEach(li => {
-      var a_in_li = li.querySelector('a');
-      if (a_in_li) {
-        var hrefValue = decodeURI(a_in_li.getAttribute('href'));
+    const lis = top_node;
+    console.log("hight_sidebar_tag_by_current_path:",lis.length);
 
-        hash = hash.replace(/\?id.*/, '');
-        if (hrefValue === hash) {
-          current_li = li;
+    let first_li_href;
+    for (const li of lis) {
+      const a_in_li = li.querySelector('a');
+      if (!a_in_li) continue;
+
+      const hrefValue = decodeURI(a_in_li.getAttribute('href'));
+      if(!first_li_href)first_li_href=hrefValue
+
+      if (hash === hrefValue) {
+        //console.log("hrefValue1:",hrefValue);
+        current_li = li;
+        break;
+      }
+
+      const cleanHash = hash.replace(/\?id.*/, '');
+      if (hrefValue === cleanHash) {
+        //console.log("hrefValue2:",hrefValue);
+        current_li = li;
+        break;
+      }
+    }
+    console.log("current_li = ",current_li,hash)
+    if(!current_li){
+      if(choose_first_file_if_not_found){
+        //current_li = first_li;
+        window.location.hash = first_li_href;
+      }else{
+        if(other_li_ul){
+          var temp_li = document.createElement('li');
+          temp_li.innerHTML = `<p><a href='${hash}'>${title}</a></p>`;
+          other_li_ul.appendChild(temp_li);
+          current_li = temp_li;
         }
       }
-    });
-    //console.log("current_li = ",current_li)
-    if (!current_li && other_li_ul) {
-      var temp_li = document.createElement('li');
-      temp_li.innerHTML = `<p><a href='${hash}'>${title}</a></p>`;
-      other_li_ul.appendChild(temp_li);
-      current_li = temp_li;
     }
     if (current_li) {
       //找到了这个相关的导航节点,那么展开它
       open_it_list(current_li);
       scrollToActive(current_li);
     }
+  }
+
+  hook.doneEach((content, next) => {
+    hight_sidebar_tag_by_current_path();
+    console.log("hook.doneEach:",vm.compiler.config)
     next(content);
   });
   hook.ready(function () {
@@ -659,8 +749,11 @@ function injectComponentSidebars(text, components) {
       if (last_sidebar != sidebar_file) {
         window.Docsify.get(sidebar_file, false, vm.config.requestHeaders).then(
           function (sidebar_content) {
-            resolveDuplicateLinks(sidebar_content, vm.compiler.config.alias);
-            next();
+            bst_sidebar_render(sidebar_content,(text)=>{
+              resolveDuplicateLinks(text, vm.compiler.config.alias);
+              next();
+            });
+            
           },
           next,
         );

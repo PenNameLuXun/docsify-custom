@@ -8,6 +8,7 @@ import { slugify } from '../slugify.js';
 export const headingCompiler = ({ renderer, router, compiler }) =>
   (renderer.heading = function ({ tokens, depth }) {
     const text = this.parser.parseInline(tokens);
+    //console.log("heading text:",text);
     let { str, config } = getAndRemoveConfig(text);
     const nextToc = { depth, title: str };
 

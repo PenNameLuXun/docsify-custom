@@ -1,5 +1,9 @@
 export const taskListItemCompiler = ({ renderer }) =>
   (renderer.listitem = function (item) {
+    //item.loose=true;
+    if(renderer.options["force_loose"]){
+      item.loose=true
+    }
     let text = '';
     if (item.task) {
       const checkbox = this.checkbox?.({ checked: !!item.checked });
@@ -27,6 +31,8 @@ export const taskListItemCompiler = ({ renderer }) =>
     }
 
     text += this.parser?.parse(item.tokens, !!item.loose);
+
+    //console.log("taskListItemCompiler text:",item,renderer);
 
     const isTaskItem = /^(<input.*type="checkbox"[^>]*>)/.test(text);
     //console.log("list text :",text)
