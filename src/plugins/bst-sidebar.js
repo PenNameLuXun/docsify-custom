@@ -327,8 +327,9 @@ function install(hook, vm) {
     return resolveDuplicateLinks(text, vm.compiler.config.alias);
   }
 
-function indentSidebar(md, level = 1) {
-  const prefix = '  '.repeat(level);
+function indentSidebar(md, indent,level = 1) {
+  let prefix = '  '.repeat(level);
+  prefix+=indent
   return md
     .split('\n')
     .map(line => line.trim() ? prefix + line : line)
@@ -349,7 +350,7 @@ function injectComponentSidebars(text, components) {
 
     //console.log("comp.stringId:",comp.stringId,"sidebar:\n",sidebar,comp.versions[0],comp.sidebars[comp.versions[0]],comp.sidebars)
 
-    const injected = indentSidebar(sidebar, 1);
+    const injected = indentSidebar(sidebar, comp.indent,1);
 
     text = text.replace(placeholder, injected);
   });
@@ -361,8 +362,9 @@ function injectComponentSidebars(text, components) {
   const fetchTasks = []; // 保存所有异步任务
 
   content = content.replace(
-    /^\s*\*\s*@@([^@]+?)@@.*$/gm,
-    (match, raw) => {
+    ///^\s*\*\s*@@([^@]+?)@@.*$/gm,
+    /^(\s*)\*\s*@@([^@]+?)@@.*$/gm,
+    (match, indent,raw) => {
 
       const parts = raw.split('|').map(p => p.trim());
 
@@ -381,16 +383,14 @@ function injectComponentSidebars(text, components) {
         name,
         versions,
         paths,
+        indent,
         vpaths:{},
         sidebars: {} // version -> sidebar content
       };
 
       let current_user_version = versions[0];
-      //g_components_user_config[stringId]={};
-      //console.log("g_components_user_config[stringId].current_user_version:",stringId,g_components_user_config[stringId].current_user_version)
       if(g_components_user_config[stringId] && g_components_user_config[stringId].current_user_version){
         current_user_version=g_components_user_config[stringId].current_user_version;
-        //console.log("current_user_version = ",current_user_version)
         if(!versions.includes(current_user_version)){
           current_user_version = versions[0];
         }
@@ -457,6 +457,7 @@ function injectComponentSidebars(text, components) {
               },
               (err) => {
                 component.sidebars[version] = '';
+                g_components_user_config[stringId][version]["content"]="";
                 console.warn(`[docsify-component] sidebar 加载失败: ${sidebarFile}`);
                 resolve(''); // 即使失败也 resolve
               }
@@ -471,7 +472,7 @@ function injectComponentSidebars(text, components) {
 
       // 同步阶段只负责生成 Markdown
       //console.log("raw:",raw);
-      return `* @@${raw}\n<!-- BST-COMPONENT:${stringId} -->`;
+      return `${indent}* @@${raw}\n<!-- BST-COMPONENT:${stringId} -->`;
     }
   );
 
@@ -549,6 +550,43 @@ function injectComponentSidebars(text, components) {
     });
   }
 
+function replaceUlWithComponentLis(parentEl, newUlHtml) {
+  if (!parentEl) return;
+
+  const ul = parentEl.querySelector(':scope > ul');
+  if (!ul) return;
+
+  /* 1️⃣ 解析 newUlHtml */
+  const temp = document.createElement('div');
+  temp.innerHTML = newUlHtml.trim();
+
+  const newUl = temp.querySelector('ul');
+  if (!newUl) return;
+
+  const newLis = Array.from(newUl.children).filter(
+    el => el.tagName === 'LI'
+  );
+
+  /* 2️⃣ 遍历原 ul 的直接 li */
+  const originLis = Array.from(ul.children);
+
+  originLis.forEach(li => {
+    const p = li.querySelector(':scope > p.component');
+
+    if (!p) {
+      /* ❌ 不符合条件 → 删除 */
+      li.remove();
+      return;
+    }
+
+    /* ✅ 符合条件 → 插入新 li */
+    newLis.forEach(newLi => {
+      ul.insertBefore(newLi.cloneNode(true), li);
+    });
+  });
+}
+
+
   function addVersionSelectorToTopLevelLi() {
     const select_nodes = document.querySelectorAll('.version-select');
     select_nodes.forEach(select=>{
@@ -568,10 +606,10 @@ function injectComponentSidebars(text, components) {
             console.log('path:', path);
             console.log("g_components_user_config for ",cid,":",g_components_user_config[cid])
 
-
             const new_sidebar  = g_components_user_config[cid][version].content;
 
             const new_ul_html = vm.compiler.sidebar(new_sidebar,5);
+
             function replaceFirstUl(parentEl, newUlHtml) {
               if (!parentEl) return;
 
@@ -582,7 +620,7 @@ function injectComponentSidebars(text, components) {
             }
             const pp_node = selectEl.parentNode.parentNode;
 
-            replaceFirstUl(pp_node,new_ul_html);
+            replaceUlWithComponentLis(pp_node,new_ul_html);
 
             //为新添加的节点设置对应的 class 名字（folder file collapse），从而实现 sidebar 区域文件夹的收起和折叠
             add_has_context_class(pp_node.querySelectorAll('li'));
@@ -692,7 +730,6 @@ function injectComponentSidebars(text, components) {
     bst_force_loose = false;
     
     add_has_context_class();
-
 
     add_default_other_container()
 

@@ -51,7 +51,7 @@ function parase_component(raw) {
 
   // 在 p 元素上标识 stringId
   return `
-    <p class="folder group"
+    <p class="folder group component"
        data-string-id="${stringId}">
       <span class="component-name">${name}</span>
       ${selectHtml}
