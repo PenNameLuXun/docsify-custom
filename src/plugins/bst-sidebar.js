@@ -505,7 +505,7 @@ function injectComponentSidebars(text, components) {
         g_components
       );
       
-      console.log("parse_compoments finished:\n",vm.compiler.renderer);
+      //console.log("parse_compoments finished:\n",vm.compiler.renderer);
         // 所有 sidebar 已就绪
         finalText = do_resolveDuplicateLinks(finalText);
         do_call_back(finalText);
@@ -734,7 +734,7 @@ function injectComponentSidebars(text, components) {
     // dom.appendTo(dom.find('.content'), div);
 
     const toggleElm = document.querySelector('button.sidebar-toggle');
-    console.log("toggleElm:",toggleElm)
+    //console.log("toggleElm:",toggleElm)
 
     btn(toggleElm, vm.router);
 
@@ -802,10 +802,21 @@ function injectComponentSidebars(text, components) {
     // btn(toggleElm, vm.router);
   });
 
+
+  function normalizeHash(hash) {
+    if (!hash) return '';
+
+    // 去掉开头 #
+    const clean = hash.startsWith('#') ? hash.slice(1) : hash;
+
+    // 分离 path 和 query
+    const idx = clean.indexOf('?');
+    return idx === -1 ? `#${clean}` : `#${clean.slice(0, idx)}`;
+  }
   function hight_sidebar_tag_by_current_path(top_node = document.querySelectorAll('.sidebar-nav .file'),choose_first_file_if_not_found = false){
     var current_li = null;
     var hash = decodeURI(vm.router.toURL(vm.router.getCurrentPath()));
-    console.log("hash=======",hash);
+    console.log("hight_sidebar_tag_by_current_path hash=======",hash);
     var curFileName = vm.router.parse().file;
     var fileNameOnly = curFileName.split('/').pop();
     var context_header = vm.compiler.cacheTOC[curFileName]
@@ -829,14 +840,15 @@ function injectComponentSidebars(text, components) {
         break;
       }
 
-      const cleanHash = hash.replace(/\?id.*/, '');
-      if (hrefValue === cleanHash) {
+      //const cleanHash = hash.replace(/\?id.*/, '');
+      const cleanHash = normalizeHash(hash);
+      if (normalizeHash(hrefValue) === cleanHash) {
         //console.log("hrefValue2:",hrefValue);
         current_li = li;
         break;
       }
     }
-    console.log("current_li = ",current_li,hash)
+    //console.log("current_li = ",current_li,hash)
     if(!current_li){
       if(choose_first_file_if_not_found){
         //current_li = first_li;
