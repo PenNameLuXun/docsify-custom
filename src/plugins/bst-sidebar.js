@@ -395,6 +395,9 @@ function injectComponentSidebars(text, components) {
           current_user_version = versions[0];
         }
       }else{
+        if(!g_components_user_config[stringId]){
+          g_components_user_config[stringId]={};
+        }
         g_components_user_config[stringId]["current_user_version"] = current_user_version;
       }
 
