@@ -267,9 +267,31 @@ function install(hook, vm) {
     localStorage.setItem('componentInfo', JSON.stringify(g_components_user_config));
   }
 
+
+  function parseHashQuery(hash) {
+  if (!hash) return {};
+
+  // 去掉开头 #
+  const clean = hash.startsWith('#') ? hash.slice(1) : hash;
+
+  // 拆 path 和 query
+  const idx = clean.indexOf('?');
+  if (idx === -1) return {};
+
+  const queryStr = clean.slice(idx + 1);
+  const params = new URLSearchParams(queryStr);
+
+  const result = {};
+  for (const [k, v] of params.entries()) {
+    result[k] = v;
+  }
+
+  return result;
+}
+
   function load_compoients(){
     const str = localStorage.getItem('componentInfo');
-    console.log("str:",str)
+    //console.log("str:",str)
 
     g_components_user_config = str ? JSON.parse(str) : null;
 
@@ -277,8 +299,18 @@ function install(hook, vm) {
       console.log("init  g_components_user_config to object.");
       g_components_user_config={};
     }
+    console.log("init window url:",window.location.hash)
 
-    console.log("g_components_user_config:",g_components_user_config)
+    //let href_1 = vm.router.toURL(window.location.hash, null, vm.router.getCurrentPath());
+
+    const { cid, ver } = parseHashQuery(window.location.hash);
+    if (cid && ver) {
+      if (!g_components_user_config[cid]) {
+        g_components_user_config[cid] = {};
+      }
+      g_components_user_config[cid].current_user_version = ver;
+    }
+    //console.log("g_components_user_config:",g_components_user_config)
   }
 
    var bst_force_loose = false;
@@ -355,13 +387,13 @@ function injectComponentSidebars(text, components) {
 
       let current_user_version = versions[0];
       //g_components_user_config[stringId]={};
-      console.log("g_components_user_config[stringId].current_user_version:",stringId,g_components_user_config[stringId].current_user_version)
+      //console.log("g_components_user_config[stringId].current_user_version:",stringId,g_components_user_config[stringId].current_user_version)
       if(g_components_user_config[stringId] && g_components_user_config[stringId].current_user_version){
         current_user_version=g_components_user_config[stringId].current_user_version;
-        console.log("current_user_version = ",current_user_version)
-        // if(!versions.contains(current_user_version)){
-        //   current_user_version = versions[0];
-        // }
+        //console.log("current_user_version = ",current_user_version)
+        if(!versions.includes(current_user_version)){
+          current_user_version = versions[0];
+        }
       }else{
         g_components_user_config[stringId]["current_user_version"] = current_user_version;
       }
@@ -402,9 +434,13 @@ function injectComponentSidebars(text, components) {
                     // 拼接绝对路径
                     const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
 
-                    //console.log("1path:",path,`[${text}](${newPath})`)
+                    //console.log("1path:",path,newPath)
+
+                    //if()
+                    //:fragment=demo
+                    const params = `cid=${stringId} ver=${version}`
                     // 返回替换后的 Markdown
-                    return `[${text}](${newPath})`;
+                    return `[${text}](${newPath}){${params}}`;
                   });
 
                   return newContent;
@@ -701,8 +737,57 @@ function injectComponentSidebars(text, components) {
     console.log("toggleElm:",toggleElm)
 
     btn(toggleElm, vm.router);
+
+    //console.log("vm compiler:",vm.compiler,vm)
+    //return;
+    vm.compiler._marked.use({
+      extensions: [{
+        name: 'paramLink',
+        level: 'inline',
+        start(src) {
+          return src.indexOf(']{');
+        },
+        tokenizer(src) {
+          const match = /^\[([^\]]+)\]\(([^)]+)\)\{([^}]+)\}/.exec(src);
+          if (!match) return;
+
+          
+
+          const [, text, href, paramStr] = match;
+          const params = Object.fromEntries(
+            paramStr.split(/\s+/).map(p => p.split('='))
+          );
+
+          let href_1 = vm.router.toURL(href, null, vm.router.getCurrentPath());
+          if (!href_1.includes('?')) {
+            href_1 += '?';
+          } else {
+            href_1 += '&';
+          }
+          //console.log("params.cid:",params.cid,"params.version:",params.version,params.ver)
+
+          href_1+=`cid=${params.cid}&ver=${params.ver}`
+          //console.log("href--:",href,href_1,params);
+          
+          return {
+            type: 'paramLink',
+            raw: match[0],
+            text,
+            href:href_1,
+            params
+          };
+        },
+        renderer(token) {
+          //console.log("token.href:",token.href)
+          return `<a href="${token.href}" data-cid="${token.params.cid}" data-version="${token.params.ver}">${token.text}</a>`;
+        }
+      }]
+    });
   });
   hook.init(_ => {
+
+
+
     window.bst_sidebar_rendered = bst_sidebar_rendered;
     window.bst_sidebar_render = bst_sidebar_render;
     window.bst_force_loose = bst_force_loose;
@@ -720,6 +805,7 @@ function injectComponentSidebars(text, components) {
   function hight_sidebar_tag_by_current_path(top_node = document.querySelectorAll('.sidebar-nav .file'),choose_first_file_if_not_found = false){
     var current_li = null;
     var hash = decodeURI(vm.router.toURL(vm.router.getCurrentPath()));
+    console.log("hash=======",hash);
     var curFileName = vm.router.parse().file;
     var fileNameOnly = curFileName.split('/').pop();
     var context_header = vm.compiler.cacheTOC[curFileName]
