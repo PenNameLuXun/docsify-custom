@@ -595,9 +595,21 @@ function injectComponentSidebars(text, components) {
     }
 
     if(need_keeps.length > 0){
-      newLis.forEach(newLi => {
-        ul.insertBefore(newLi.cloneNode(true), compent_li_first?need_keeps[0].nextSibling:need_keeps[0]);
-      });
+      let base_li = need_keeps[0];
+      if(compent_li_first){
+        base_li = need_keeps[need_keeps.length-1].nextSibling;
+        //base_li.nextSibling
+        newLis.forEach(newLi => {
+          let newli = newLi.cloneNode(true);
+          ul.insertBefore(newli, base_li);
+          base_li=newli.nextSibling
+        });
+      }else{
+        newLis.forEach(newLi => {
+          ul.insertBefore(newLi.cloneNode(true), base_li);
+        });
+      }
+      
     }else{
       newLis.forEach(newLi => {
         ul.appendChild(newLi.cloneNode(true));
