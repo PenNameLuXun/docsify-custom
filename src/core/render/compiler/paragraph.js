@@ -59,6 +59,26 @@ function parase_component(raw) {
   `;
 }
 
+function bst_class_helper(renderer, text = '') {
+  const classNames = [];
+
+  if (renderer?.bst_options?.sidebar_compiling) {
+    classNames.push('sidebar_tag');
+  }
+
+  if (renderer?.bst_options?.sidebar_tgg) {
+    
+    classNames.push('sidebar_compose_tag');
+  }
+
+  // 没有任何 class 时，直接返回原文本
+  if (classNames.length === 0) {
+    return `<p>${text}</p>`;
+  }
+
+  return `<p class="${classNames.join(' ')}">${text}</p>`;
+}
+
 export const paragraphCompiler = ({ renderer }) =>
   (renderer.paragraph = function ({ tokens }) {
     const text = this.parser.parseInline(tokens);
@@ -75,11 +95,7 @@ export const paragraphCompiler = ({ renderer }) =>
       return parase_component(text1);
     } 
     else {
-      if(renderer.options.sidebar_compiling){
-        result = /* html */ `<p class=sidebar_tag>${text}</p>`;
-      }else{
-        result = /* html */ `<p>${text}</p>`;
-      }
+      result = bst_class_helper(renderer,text);
     }
 
     return result;

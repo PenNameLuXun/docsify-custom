@@ -195,9 +195,7 @@ export class Compiler {
 
     // compile sidebar from _sidebar.md
     if (text) {
-      this.renderer.options["sidebar_compiling"]=true
       let result = this.compile(text);
-      this.renderer.options["sidebar_compiling"]=false
       return result;
     }
     // compile sidebar from content's headings toc
