@@ -62,7 +62,6 @@ function parase_component(raw) {
 export const paragraphCompiler = ({ renderer }) =>
   (renderer.paragraph = function ({ tokens }) {
     const text = this.parser.parseInline(tokens);
-    //console.log("text:",text,renderer,tokens);
     
     let result;
 
@@ -76,7 +75,11 @@ export const paragraphCompiler = ({ renderer }) =>
       return parase_component(text1);
     } 
     else {
-      result = /* html */ `<p>${text}</p>`;
+      if(renderer.options.sidebar_compiling){
+        result = /* html */ `<p class=sidebar_tag>${text}</p>`;
+      }else{
+        result = /* html */ `<p>${text}</p>`;
+      }
     }
 
     return result;

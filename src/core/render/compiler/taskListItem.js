@@ -1,7 +1,7 @@
 export const taskListItemCompiler = ({ renderer }) =>
   (renderer.listitem = function (item) {
     //item.loose=true;
-    if(renderer.options["force_loose"]){
+    if(renderer.options["force_loose"]||renderer.options.sidebar_compiling){
       item.loose=true
     }
     let text = '';

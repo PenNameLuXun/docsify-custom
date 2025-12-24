@@ -554,14 +554,14 @@ function replaceUlWithComponentLis(parentEl, newUlHtml) {
   if (!parentEl) return;
 
   const ul = parentEl.querySelector(':scope > ul');
-  if (!ul) return;
+  if (!ul) {console.log("return ul:",ul);return;}
 
   /* 1️⃣ 解析 newUlHtml */
   const temp = document.createElement('div');
   temp.innerHTML = newUlHtml.trim();
 
   const newUl = temp.querySelector('ul');
-  if (!newUl) return;
+  if (!newUl) {console.log("newUl:",newUl);return;}
 
   const newLis = Array.from(newUl.children).filter(
     el => el.tagName === 'LI'
@@ -570,20 +570,48 @@ function replaceUlWithComponentLis(parentEl, newUlHtml) {
   /* 2️⃣ 遍历原 ul 的直接 li */
   const originLis = Array.from(ul.children);
 
-  originLis.forEach(li => {
+  let need_keeps = [];
+  let compent_li_first = false
+  for (let i = 0;i<originLis.length;++i) {
+    const li = originLis[i];
     const p = li.querySelector(':scope > p.component');
-
     if (!p) {
-      /* ❌ 不符合条件 → 删除 */
       li.remove();
-      return;
-    }
+      if(need_keeps.length > 0 && !compent_li_first){
+        compent_li_first = true;
+      }
+    }else{
+      need_keeps.push(li);
+    } 
+  }
 
-    /* ✅ 符合条件 → 插入新 li */
+  if(need_keeps.length > 0){
     newLis.forEach(newLi => {
-      ul.insertBefore(newLi.cloneNode(true), li);
+      ul.insertBefore(newLi.cloneNode(true), compent_li_first?need_keeps[0].nextSibling:need_keeps[0]);
     });
-  });
+  }else{
+    newLis.forEach(newLi => {
+      ul.appendChild(newLi.cloneNode(true));
+    });
+  }
+  
+  
+
+  // originLis.forEach(li => {
+  //   const p = li.querySelector(':scope > p.component');
+
+  //   if (!p) {
+  //     /* ❌ 不符合条件 → 删除 */
+  //     li.remove();
+  //     console.log("li.remove:");
+  //     //return;
+  //   }
+
+  //   /* ✅ 符合条件 → 插入新 li */
+  //   newLis.forEach(newLi => {
+  //     ul.insertBefore(newLi.cloneNode(true), li);
+  //   });
+  // });
 }
 
 
@@ -626,6 +654,7 @@ function replaceUlWithComponentLis(parentEl, newUlHtml) {
             add_has_context_class(pp_node.querySelectorAll('li'));
 
             //从当前切换的区域内查找可能存在的当前路径，如果不存在，那么跳转到当前区域的第一个文件去
+            console.log("pp_node:",pp_node,new_ul_html)
             hight_sidebar_tag_by_current_path(pp_node.querySelectorAll('.file'),true);
 
             save_compoients();
