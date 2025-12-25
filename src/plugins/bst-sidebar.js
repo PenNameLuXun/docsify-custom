@@ -874,6 +874,7 @@ function injectComponentSidebars(text, components) {
       }else{
         if(other_li_ul){
           var temp_li = document.createElement('li');
+          temp_li.classList.add('file');
           temp_li.innerHTML = `<p><a href='${hash}'>${title}</a></p>`;
           other_li_ul.appendChild(temp_li);
           current_li = temp_li;
