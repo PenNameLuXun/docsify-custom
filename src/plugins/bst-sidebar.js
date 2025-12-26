@@ -289,6 +289,20 @@ function install(hook, vm) {
 
   return result;
 }
+function isSameQueryResult(a, b) {
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    if (!(key in b)) return false;
+    if (a[key] !== b[key]) return false;
+  }
+
+  return true;
+}
+
 
   function load_compoients(){
     const str = localStorage.getItem('componentInfo');
@@ -826,8 +840,11 @@ function injectComponentSidebars(text, components) {
   }
   function hight_sidebar_tag_by_current_path(top_node = document.querySelectorAll('.sidebar-nav .file'),choose_first_file_if_not_found = false){
     var current_li = null;
+    let first_same_cleanhash_li = null
     var hash = decodeURI(vm.router.toURL(vm.router.getCurrentPath()));
-    //console.log("hight_sidebar_tag_by_current_path hash=======",hash);
+    const cleanHash   = normalizeHash(hash);
+    const cleanParams = parseHashQuery(hash);
+    console.log("hight_sidebar_tag_by_current_path hash=======",parseHashQuery(hash));
     var curFileName = vm.router.parse().file;
     var fileNameOnly = curFileName.split('/').pop();
     var context_header = vm.compiler.cacheTOC[curFileName]
@@ -843,30 +860,23 @@ function injectComponentSidebars(text, components) {
       if (!a_in_li) continue;
 
       const hrefValue = decodeURI(a_in_li.getAttribute('href'));
+      //console.log("hrefValue",parseHashQuery(hrefValue));
       if(!first_li_href){
         first_li_href=hrefValue
       }
 
-      if (hash === hrefValue) {
-        current_li = li;
-        break;
-      }
-    }
-
-    if(!current_li){
-        for (const li of lis) {
-        const a_in_li = li.querySelector('a');
-        if (!a_in_li) continue;
-
-        const hrefValue = decodeURI(a_in_li.getAttribute('href'));
-        const cleanHash = normalizeHash(hash);
-        if (normalizeHash(hrefValue) === cleanHash) {
+      if (normalizeHash(hrefValue) == cleanHash) {
+        if(!first_same_cleanhash_li)first_same_cleanhash_li=li;
+        if(isSameQueryResult(parseHashQuery(hrefValue),cleanParams)){
           current_li = li;
           break;
         }
       }
     }
-    //console.log("current_li = ",current_li,hash)
+
+    if(!current_li){
+      current_li = first_same_cleanhash_li
+    }
     if(!current_li){
       if(choose_first_file_if_not_found){
         //current_li = first_li;
