@@ -92,10 +92,10 @@ code.code-native {
 .sidebar .sidebar-nav {
     line-height: 2em;
     padding-bottom: 40px;
-    padding-left: 15px;
+    padding-left: 5px;
 }
 
-.sidebar-nav ul:not(.app-sub-sidebar) > li.folder::before
+/* .sidebar-nav ul:not(.app-sub-sidebar) > li.folder::before
 {
   content: '';
   display: block;
@@ -108,32 +108,82 @@ code.code-native {
   border-bottom: 2px solid #888;
   transform: rotate(45deg);
   transition: transform 0.2s ease;
-}
+} */
 
 /* 折叠时箭头向右 */
-.sidebar-nav ul:not(.app-sub-sidebar) > li.folder.collapse::before {
+/* .sidebar-nav ul:not(.app-sub-sidebar) > li.folder.collapse::before {
   transform: rotate(-45deg);
   top: 8.5px;
   left: -16px;
-}
+} */
 
 /* 层级缩进控制 */
-.sidebar-nav li {
+/* .sidebar-nav li {
   position: relative;
-  padding-left: 16px;
   margin-left: 6px;
   line-height: 1.8;
   font-size: 15px;
   color: #333;
-  /* cursor: pointer; */
-}
+} */
 
 /* 第二级及更深层级 */
-.sidebar-nav li > ul > li {
+/* .sidebar-nav li > ul > li {
   padding-left: 1px;
   font-size: 14px;
   color: #555;
+} */
+
+.toggle-btn {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  margin-right: 2px;
+  padding: 0;
+  border: 1px solid #999;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+  opacity: 0.6;
 }
+.toggle-btn::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+li.folder.collapse .toggle-btn::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 1px;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+.sidebar-nav li.hascontent > p.sidebar_tag > a{
+  font-weight: 700;
+  color: #364149;
+  font-size: 15px;
+  display: inline;
+}
+
+/* li.folder.collapse .toggle-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: currentColor;
+  transform: translateX(-50%);
+} */
+
+
 
 /* 默认隐藏子菜单 */
 .sidebar-nav li > ul {

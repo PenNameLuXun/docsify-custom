@@ -230,33 +230,113 @@ function install(hook, vm) {
     }
   })();
 
-  function resolveDuplicateLinks(content, aliasMap = {}) {
-    const regex = /\[[^\]]+]\(([^)]+?)\)/g; // 捕获所有 [xxx](path.xxx) 样式的链接
-    const pathCount = {};
 
-    function removeHash(url) {
-      return url.split('#')[0];
+    /**
+   * 给路径的文件名插入指定后缀
+   * @param {string} path - 原始路径
+   * @param {number|string} count - 要插入的数字或字符串
+   * @returns {string} - 修改后的完整路径
+   */
+  function insertSuffixToFileName(path, count) {
+    const lastSlash = path.lastIndexOf('/');
+    const dir = path.slice(0, lastSlash + 1); // 目录部分，包含 '/'
+    const file = path.slice(lastSlash + 1);   // 文件名部分
+
+    // 匹配扩展名和 query/hash
+    const match = file.match(/^(.+?)(\.[^./?#]+)?([#?]?.*)$/);
+    if (!match) return path; // 极端保护
+
+    const namePart = match[1];     // 文件名主体
+    const ext = match[2] || '';    // 扩展名（可能为空）
+    const suffix = match[3] || ''; // query 或 hash
+
+    const newFile = `${namePart}_${count}${ext}${suffix}`;
+    return dir + newFile;
+  }
+
+  // function resolveDuplicateLinks(content, aliasMap = {}) {
+  //   const regex = /\[[^\]]+]\(([^)]+?)\)/g; // 捕获所有 [xxx](path.xxx) 样式的链接
+  //   const pathCount = {};
+
+  //   function removeHash(url) {
+  //     return url.split('#')[0];
+  //   }
+
+  //   const newContent = content.replace(regex, (match, path) => {
+  //     path = removeHash(path)
+  //     if (!pathCount[path]) {
+  //       pathCount[path] = 1;
+  //       return match;
+  //     }
+
+  //     const count = pathCount[path]++;
+      
+  //     const newPath = path.replace(/(\.[^./?#]+)([#?]?.*)$/, `_${count}$1$2`);
+
+
+  //     console.log('replace path = ', path, newPath);
+
+  //     aliasMap[newPath.replace('.md', '')] = path.replace('.md', '');
+  //     return match.replace(path, newPath);
+  //   });
+
+  //   return newContent;
+  // }
+  function resolveDuplicateLinks(content, aliasMap = {}) {
+  // 匹配 [text](path) 格式
+  const regex = /\[([^\]]+)\]\(([^)]+?)\)/g;
+  const pathCount = {};
+
+  function removeHash(url) {
+    return url.split('#')[0];
+  }
+
+  const newContent = content.replace(regex, (match, text, path) => {
+    const originalPath = path;
+    const pathNoHash = removeHash(path);
+    const hash = path.substring(pathNoHash.length); // 保留 #xxx 部分
+
+    if (!pathCount[pathNoHash]) {
+      pathCount[pathNoHash] = 1;
+      return match;
     }
 
-    const newContent = content.replace(regex, (match, path) => {
-      path = removeHash(path)
-      if (!pathCount[path]) {
-        pathCount[path] = 1;
-        return match;
-      }
+    const count = pathCount[pathNoHash]++;
 
-      const count = pathCount[path]++;
-      
-      const newPath = path.replace(/(\.[^./?#]+)([#?]?.*)$/, `_${count}$1$2`);
+    // --- 核心修复：更健壮的后缀处理逻辑 ---
+    // 1. 找到最后一个斜杠的位置，确保我们只处理文件名，不处理文件夹名中的点
+    const lastSlashIndex = pathNoHash.lastIndexOf('/');
+    const fileName = pathNoHash.substring(lastSlashIndex + 1);
+    const dirPath = pathNoHash.substring(0, lastSlashIndex + 1);
 
-      //console.log('replace path = ', path, newPath);
+    // 2. 在文件名中找最后一个点
+    const lastDotIndex = fileName.lastIndexOf('.');
+    
+    let newPathNoHash;
+    if (lastDotIndex !== -1 && lastDotIndex !== 0) {
+      // 有后缀名 (例如 README.md -> README_1.md)
+      const baseName = fileName.substring(0, lastDotIndex);
+      const ext = fileName.substring(lastDotIndex);
+      newPathNoHash = `${dirPath}${baseName}_${count}${ext}`;
+    } else {
+      // 无后缀名 (例如 README -> README_1)
+      newPathNoHash = `${pathNoHash}_${count}`;
+    }
 
-      aliasMap[newPath.replace('.md', '')] = path.replace('.md', '');
-      return match.replace(path, newPath);
-    });
+    const newPath = newPathNoHash + hash;
 
-    return newContent;
-  }
+    //console.log('Original:', path, '-> New:', newPath);
+
+    // 更新 aliasMap (自动移除扩展名，不再硬编码 .md)
+    const getCleanKey = (p) => removeHash(p).replace(/\.[^./?#]+$/, '');
+    aliasMap[getCleanKey(newPath)] = getCleanKey(pathNoHash);
+
+    // 返回替换后的完整 Markdown 链接
+    return `[${text}](${newPath})`;
+  });
+
+  return newContent;
+}
 
 
   var g_components = []
@@ -475,7 +555,7 @@ function injectComponentSidebars(text, components) {
         });
 
 
-        console.log("component:",component)
+        //console.log("component:",component)
         g_components.push(component);
 
         // 同步阶段只负责生成 Markdown
@@ -536,18 +616,28 @@ function injectComponentSidebars(text, components) {
       if (li.querySelector('ul')) {
         li.classList.add('folder', 'collapse');
 
-        const has_p = li.querySelector(':scope>p');
-        if (!has_p) {
+        let p = li.querySelector(':scope>p');
+        if (!p) {
           //添加一个p包裹
           //console.log("li no p:",li,li.innerHTML)
           for (const node of li.childNodes) {
             if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-              const p = document.createElement('p');
+              p = document.createElement('p');
               p.textContent = node.nodeValue.trim();
               li.replaceChild(p, node);
               break;
             }
           }
+        }
+
+        let btn = p.querySelector('.toggle-btn');
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.className = 'toggle-btn';
+          btn.type = 'button';
+          //btn.textContent = '+';
+          btn.setAttribute('aria-label', 'toggle');
+          p.prepend(btn);
         }
 
         const hasLink = li.querySelector(':scope>p>a');
@@ -557,6 +647,75 @@ function injectComponentSidebars(text, components) {
       }
     });
   }
+
+// function add_has_context_class(
+//   li_list = document.querySelectorAll('.sidebar-nav li')
+// ) {
+//   li_list.forEach(li => {
+//     const subUl = li.querySelector(':scope > ul');
+
+//     if (!subUl) {
+//       li.classList.add('file');
+//       return;
+//     }
+
+//     li.classList.add('folder', 'collapse');
+
+//     /* 1. 确保有 <p> */
+//     let p = li.querySelector(':scope > p');
+//     if (!p) {
+//       for (const node of li.childNodes) {
+//         if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+//           p = document.createElement('p');
+//           p.textContent = node.nodeValue.trim();
+//           li.replaceChild(p, node);
+//           break;
+//         }
+//       }
+//     }
+//     if (!p) return;
+
+//     /* 2. 统一的 toggle 函数 */
+//     const toggle = () => {
+//       const collapsed = li.classList.toggle('collapse');
+//       btn.textContent = collapsed ? '+' : '-';
+//       subUl.style.display = collapsed ? 'none' : '';
+//     };
+
+//     /* 3. 添加按钮（只一次） */
+//     let btn = p.querySelector('.toggle-btn');
+//     if (!btn) {
+//       btn = document.createElement('button');
+//       btn.className = 'toggle-btn';
+//       btn.type = 'button';
+//       btn.textContent = '+';
+//       btn.setAttribute('aria-label', 'toggle');
+//       p.prepend(btn);
+//     }
+
+//     // 初始折叠
+//     subUl.style.display = 'none';
+
+//     /* 4. 按钮点击 */
+//     btn.addEventListener('click', e => {
+//       e.stopPropagation();
+//       toggle();
+//     });
+
+//     /* 5. 点击 p 展开/收起（但排除 <a>） */
+//     p.addEventListener('click', e => {
+//       if (e.target.closest('a')) return;
+//       toggle();
+//     });
+
+//     /* 6. 标记是否有内容链接 */
+//     if (p.querySelector('a')) {
+//       li.classList.add('hascontent');
+//     }
+//   });
+// }
+
+
 
   function getLi_P_text(li){
     const text = li.querySelector(':scope > p')?.textContent ?? '';
@@ -686,10 +845,8 @@ function injectComponentSidebars(text, components) {
             const cid = option.dataset.cid;
 
             g_components_user_config[cid]["current_user_version"] = version;
-            console.log('component:', cname,cid);
-            console.log('version:', version);
-            console.log('path:', path);
-            console.log("g_components_user_config for ",cid,":",g_components_user_config[cid])
+            console.log('component:', cname,cid,version,path);
+            //console.log("g_components_user_config for ",cid,":",g_components_user_config[cid])
 
             setComponentToVersion(cid,version);
             
@@ -844,7 +1001,7 @@ function injectComponentSidebars(text, components) {
     var hash = decodeURI(vm.router.toURL(vm.router.getCurrentPath()));
     const cleanHash   = normalizeHash(hash);
     const cleanParams = parseHashQuery(hash);
-    console.log("hight_sidebar_tag_by_current_path hash=======",parseHashQuery(hash));
+    //console.log("hight_sidebar_tag_by_current_path hash=======",parseHashQuery(hash));
     var curFileName = vm.router.parse().file;
     var fileNameOnly = curFileName.split('/').pop();
     var context_header = vm.compiler.cacheTOC[curFileName]
@@ -900,7 +1057,7 @@ function injectComponentSidebars(text, components) {
 
   hook.doneEach((content, next) => {
     hight_sidebar_tag_by_current_path();
-    console.log("hook.doneEach:",vm.compiler.config)
+    //console.log("hook.doneEach:",vm.compiler.config)
     next(content);
   });
   hook.ready(function () {

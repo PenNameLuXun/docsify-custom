@@ -273,7 +273,11 @@ main.hidden {
 } */
 
 .sidebar ul {
-    margin: 0 0 0 10px;
+    margin: 0 0 0 15px;
+    padding: 0
+}
+.sidebar-nav > ul{
+    margin: 0 0 0 3px;
     padding: 0
 }
 
@@ -1002,6 +1006,6 @@ code .token {
     left: auto
 } */
 
-li.folder {
+/* li.folder {
     padding-left: 4px;
-}
+} */

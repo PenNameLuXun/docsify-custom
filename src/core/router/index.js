@@ -72,8 +72,8 @@ export function Router(Base) {
       router.onchange(params => {
         this.updateRender();
         this._updateRender();
-        console.log("lastRoute.path:",params.event.oldURL)
-        console.log("    route.path:",params.event.newURL)
+        //console.log("lastRoute.path:",params.event.oldURL)
+        //console.log("    route.path:",params.event.newURL)
         const onlyIdChanged = this.isOnlyIdChanged(params.event.oldURL,params.event.newURL);
         //if (lastRoute.path === this.route.path) 
         if(onlyIdChanged)
