@@ -61,8 +61,11 @@ const install = function (hook, vm) {
     !isAuto && initSearch(CONFIG, vm);
   });
   hook.doneEach(_ => {
-    updateComponent(CONFIG, vm);
-    isAuto && initSearch(CONFIG, vm);
+    setTimeout(() => {
+      updateComponent(CONFIG, vm);
+      isAuto && initSearch(CONFIG, vm);
+    }, 200);
+    
   });
 };
 

@@ -63,15 +63,36 @@ function escapeHtml(string) {
 
   return String(string).replace(/[&<>"']/g, s => entityMap[s]);
 }
+  function parseHashQuery(hash) {
+    if (!hash) return {};
 
+    // 去掉开头 #
+    const clean = hash.startsWith('#') ? hash.slice(1) : hash;
+
+    // 拆 path 和 query
+    const idx = clean.indexOf('?');
+    if (idx === -1) return {};
+
+    const queryStr = clean.slice(idx + 1);
+    const params = new URLSearchParams(queryStr);
+
+    const result = {};
+    for (const [k, v] of params.entries()) {
+      result[k] = v;
+    }
+
+    return result;
+}
 function getAllPaths(router) {
   const paths = [];
+  const params = [];
 
   Docsify.dom
     .findAll('.sidebar-nav a:not(.section-link):not([data-nosearch])')
     .forEach(node => {
       const href = node.href;
       const originHref = node.getAttribute('href');
+      
       const path = router.parse(href).path;
 
       if (
@@ -80,10 +101,11 @@ function getAllPaths(router) {
         !Docsify.util.isAbsolutePath(originHref)
       ) {
         paths.push(path);
+        params.push(parseHashQuery(originHref))
       }
     });
 
-  return paths;
+  return {paths:paths,params:params};
 }
 
 function getTableData(token) {
@@ -103,7 +125,7 @@ function getListData(token) {
   return token.text;
 }
 
-export function genIndex(path, content = '', router, depth, indexKey) {
+export function genIndex(path, content = '', router, depth, indexKey,params) {
   const tokens = window.marked.lexer(content);
   const slugify = window.Docsify.slugify;
   const index = {};
@@ -116,11 +138,16 @@ export function genIndex(path, content = '', router, depth, indexKey) {
 
       const text = getAndRemoveDocsifyIgnoreConfig(token.text).content;
 
+      let params_s = params?params:{};
+
       if (config.id) {
-        slug = router.toURL(path, { id: slugify(config.id) });
+        params_s["id"]=slugify(config.id)
+        //slug = router.toURL(path, { id: slugify(config.id) });
       } else {
-        slug = router.toURL(path, { id: slugify(escapeHtml(text)) });
+        params_s["id"]=slugify(escapeHtml(text))
+        //slug = router.toURL(path, { id: slugify(escapeHtml(text)) });
       }
+      slug = router.toURL(path, params_s);
 
       if (str) {
         title = getAndRemoveDocsifyIgnoreConfig(str).content;
@@ -135,13 +162,13 @@ export function genIndex(path, content = '', router, depth, indexKey) {
       };
     } else {
       if (tokenIndex === 0) {
-        slug = router.toURL(path);
+        slug = router.toURL(path,params);
         index[slug] = {
           slug,
           title: path !== '/' ? path.slice(1) : 'Home Page',
           body: markdownToTxt(token.text || ''),
           path: path,
-          indexKey: indexKey,
+          indexKey: indexKey
         };
       }
 
@@ -266,7 +293,8 @@ export function search(query) {
 
 export async function init(config, vm) {
   const isAuto = config.paths === 'auto';
-  const paths = isAuto ? getAllPaths(vm.router) : config.paths;
+  const path_params = getAllPaths(vm.router);
+  const paths = isAuto ? path_params.paths : config.paths;
 
   let namespaceSuffix = '';
 
@@ -311,7 +339,7 @@ export async function init(config, vm) {
   const len = paths.length;
   let count = 0;
 
-  paths.forEach(path => {
+  paths.forEach((path,i) => {
     const pathExists = Array.isArray(INDEXES)
       ? INDEXES.some(obj => obj.path === path)
       : false;
@@ -327,6 +355,7 @@ export async function init(config, vm) {
           vm.router,
           config.depth,
           indexKey,
+          path_params.params[i]
         );
         if (len === ++count) {
           //console.log("expireKeyexpireKey:",expireKey,config.maxAge)
