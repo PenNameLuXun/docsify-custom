@@ -277,9 +277,10 @@ function install(hook, vm) {
   hook.ready(updatePagination)
 
   hook.doneEach(function(){
-    updatePagination();
-
-    onScrollShowPagination(); // 初始化判断一次
+    setTimeout(() => {
+      updatePagination();
+      onScrollShowPagination(); // 初始化判断一次
+    }, 200);
   });
 }
 
