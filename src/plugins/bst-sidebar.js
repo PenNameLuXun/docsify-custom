@@ -498,7 +498,9 @@ function injectComponentSidebars(text, components) {
           var abs_path = component.paths[idx];
           //console.log("abs_path:",abs_path)
           component.vpaths[version]=abs_path;
-          const sidebarFile = paths[idx] + '/_sidebar.md';
+          const sidebarFile = paths[idx] + '/_sidebar.md';//embed-files.md _sidebar.md
+
+          const is_gitlab_remote = sidebarFile.startsWith("/gitlab-raw")
           // 包装成 Promise
           //if(current_user_version == version)
             {
@@ -514,13 +516,19 @@ function injectComponentSidebars(text, components) {
                     const regex = /\[([^\]]+)]\(([^)]+?)\)/g;
 
                     const newContent = content.replace(regex, (match, text, path) => {
+                      //console.log("abs_path:",abs_path,"path:",path)
                       
                       // 如果 path 已经是绝对 URL 或以 / 开头，不加前缀
-                      if (/^(https?:)?\/\//.test(path) || path.startsWith('/')) {
+                      if (/^(https?:)?\/\//.test(path)) {
+                        return match;
+                      }
+
+                      if(path.startsWith('/') && !is_gitlab_remote){
                         return match;
                       }
 
                       // 拼接绝对路径
+                      
                       const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
 
                       //console.log("1path:",path,newPath)
@@ -600,6 +608,7 @@ function injectComponentSidebars(text, components) {
       //console.log("parse_compoments finished:\n",vm.compiler.renderer);
         // 所有 sidebar 已就绪
         finalText = do_resolveDuplicateLinks(finalText);
+        //console.log("finalText:",finalText)
         do_call_back(finalText);
       })
       .catch(err => {
@@ -802,6 +811,8 @@ function injectComponentSidebars(text, components) {
     g_components_user_config[cid]["current_user_version"] = version;
 
     const new_sidebar  = g_components_user_config[cid][version].content;
+
+    //console.log("new_sidebar:",g_components_user_config)
 
     //console.log("setComponentToVersion vm.compiler:",vm.compiler,vm.compiler.renderer);
 
