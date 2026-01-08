@@ -420,9 +420,11 @@ export function Render(Base) {
             {
               compiler: this.compiler,
               raw: result,
+              fetch:this,
             },
             tokens => {
               html = this.compiler.compile(tokens);
+              //console.log("-------- result:",result,html)
               callback();
             },
           );

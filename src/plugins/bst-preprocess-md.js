@@ -162,17 +162,18 @@ function preprocessMarkdown(markdown, vm) {
   //   return m.replace(href, abs);
   // });
   markdown = markdown.replace(
-    /!\[([^\]]*)]\(\s*([^)\s]+)(?:\s+(['"])(.*?)\3)?\s*\)/g,
+    /\[([^\]]*)]\(\s*([^)\s]+)(?:\s+(['"])(.*?)\3)?\s*\)/g,
     (m, alt, href, quote, title) => {
       let abs = href.includes(' ')
         ? href.replace(/ /g, '%20')
         : href;
 
+      //console.log("abs:",abs,"href:",href,"title:",title)
       abs = getConfigAlias(abs, vm);
 
       const titlePart = title ? ` ${quote}${title}${quote}` : '';
 
-      return `![${alt}](${abs}${titlePart})`;
+      return `[${alt}](${abs}${titlePart})`;
     },
   );
 

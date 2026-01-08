@@ -1,5 +1,6 @@
 import { stripIndent } from 'common-tags';
 import { get } from '../util/ajax.js';
+import { isAbsolutePath } from '../router/util.js';
 
 const cached = {};
 
@@ -82,13 +83,34 @@ function walkFetchEmbed({ embedTokens, compile, fetch }, cb) {
     };
 
     if (token.embed.url) {
+      //console.log("fetch.router.getAlias(token.embed.url):",fetch.router.getAlias(token.embed.url))
       get(token.embed.url).then(next);
     } else {
+      // 捕获到其中的链接 src，然后进行 getAlias 替换
+      //
+      //console.log("fetch.router.getAlias(token.embed.url):",fetch.router.getAlias(token.embed.html),token)
       next(token.embed.html);
     }
   }
 }
 
+
+function href_handle(href,compiler,router){
+  if (!isAbsolutePath(href) &&
+      !compiler._matchNotCompileLink(href)) {
+        if (href === compiler.config.homepage) {
+          href = 'README';
+        }
+  
+        href = router.toURL(href, null, router.getCurrentPath());
+      } else {
+        if (!isAbsolutePath(href) && href.slice(0, 2) === './') {
+          href = document.URL.replace(/\/(?!.*\/).*/, '/').replace('#/./', '') + href;
+        }
+      }
+      href = router.getAlias(href)
+  return href
+}
 export function prerenderEmbed({ compiler, raw = '', fetch }, done) {
   const hit = cached[raw];
   if (hit) {
@@ -108,7 +130,11 @@ export function prerenderEmbed({ compiler, raw = '', fetch }, done) {
       token.text = token.text.replace(
         new RegExp(linkRE.source, 'g'),
         (src, filename, href, title) => {
+          href = href_handle(href,compiler,fetch.router)
           const embed = compiler.compileEmbed(href, title);
+
+
+          //console.log("href:",href,fetch.router.getAlias(href),fetch.route)
 
           if (embed) {
             embedTokens.push({

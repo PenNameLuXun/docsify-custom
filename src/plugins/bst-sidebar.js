@@ -496,11 +496,24 @@ function injectComponentSidebars(text, components) {
             g_components_user_config[stringId][version] = {}
           }
           var abs_path = component.paths[idx];
-          //console.log("abs_path:",abs_path)
+          
           component.vpaths[version]=abs_path;
           const sidebarFile = paths[idx] + '/_sidebar.md';//embed-files.md _sidebar.md
 
+          const is_remote = window.Docsify.util.isExternal(sidebarFile)
+          const is_abspath = window.Docsify.util.isAbsolutePath(sidebarFile)
           const is_gitlab_remote = sidebarFile.startsWith("/gitlab-raw")
+
+          const alias_name = "/" + encodeURI(abs_path)
+          if(is_remote){
+            //需要创建一个别名伪装成本地内容
+            vm.compiler.config.alias[alias_name + "(.*)"] = abs_path + "$1"
+            //vm.compiler.config.alias[alias_name + "_media/(.*)"] = abs_path + "_media/$1"
+            ///https://raw.githubusercontent.com/docsifyjs/docsify/refs/heads/develop/docs/_media
+            abs_path = alias_name
+          }
+
+          //console.log("abs_path:",abs_path,window.Docsify,is_remote,is_abspath,vm.compiler.config.alias)
           // 包装成 Promise
           //if(current_user_version == version)
             {
@@ -554,19 +567,23 @@ function injectComponentSidebars(text, components) {
                         }
 
                         // 以 / 开头但不是 gitlab remote
-                        if (path.startsWith('/') && !is_gitlab_remote) {
+                        if (path.startsWith('/') && !is_gitlab_remote && !is_remote) {
                           return match;
                         }
-                        //console.log("title:",title,path)
+                        
 
                         const newPath =
                           `${abs_path.replace(/\/$/, '')}/` +
                           `${path.replace(/^\.?\//, '')}`;
 
+                        
+
                         const params = `cid=${stringId} ver=${version}`;
 
                         // 重新拼装 title（如果有）
                         const titlePart = title ? ` ${quote}${title}${quote}` : '';
+
+                        //console.log("path:",`[${text}](${newPath}${titlePart}){${params}}`)
 
                         return `[${text}](${newPath}${titlePart}){${params}}`;
                       },
@@ -574,7 +591,9 @@ function injectComponentSidebars(text, components) {
                   }
 
 
-                  content=replace_path(content,abs_path);
+                  content = replace_path(content,abs_path);
+
+                  //console.log("then content:",content,stringId,version)
 
                   component.sidebars[version] = content;
                   g_components_user_config[stringId][version]["content"] = content;
@@ -843,13 +862,15 @@ function injectComponentSidebars(text, components) {
 
     const new_sidebar  = g_components_user_config[cid][version].content;
 
-    //console.log("new_sidebar:",g_components_user_config)
+    //console.log("new_sidebar:",new_sidebar,cid,version)
 
     //console.log("setComponentToVersion vm.compiler:",vm.compiler,vm.compiler.renderer);
 
     vm.compiler.renderer.bst_options["sidebar_tgg"]=true
     vm.compiler.renderer.bst_options["sidebar_compiling"]=true
     const new_ul_html = vm.compiler.sidebar(new_sidebar,5);
+
+    //console.log("new_ul_html:",new_ul_html)
     vm.compiler.renderer.bst_options["sidebar_tgg"]=false
     vm.compiler.renderer.bst_options["sidebar_compiling"]=false
 
@@ -995,7 +1016,12 @@ function injectComponentSidebars(text, components) {
             paramStr.split(/\s+/).map(p => p.split('='))
           );
 
-          let href_1 = vm.router.toURL(href, null, vm.router.getCurrentPath());
+          let href_1 = href
+          
+          const is_remote = window.Docsify.util.isExternal(href_1)
+          if(!is_remote)
+            href_1 = vm.router.toURL(href, null, vm.router.getCurrentPath());
+
           if (!href_1.includes('?')) {
             href_1 += '?';
           } else {
