@@ -511,37 +511,68 @@ function injectComponentSidebars(text, components) {
                 (content) => {
                   //针对content中的路径还得更新成
                   //...todo
+                  // function replace_path(content, abs_path) {
+                  //   // 捕获 Markdown 中 [text](path) 的链接
+                  //   const regex = /\[([^\]]+)]\(([^)]+?)\)/g;
+
+                  //   const newContent = content.replace(regex, (match, text, path) => {
+                  //     //console.log("abs_path:",abs_path,"path:",path)
+                      
+                  //     // 如果 path 已经是绝对 URL 或以 / 开头，不加前缀
+                  //     if (/^(https?:)?\/\//.test(path)) {
+                  //       return match;
+                  //     }
+
+                  //     if(path.startsWith('/') && !is_gitlab_remote){
+                  //       return match;
+                  //     }
+
+                  //     // 拼接绝对路径
+                      
+                  //     const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
+
+                  //     //console.log("1path:",path,newPath)
+
+                  //     //if()
+                  //     //:fragment=demo
+                  //     const params = `cid=${stringId} ver=${version}`
+                  //     // 返回替换后的 Markdown
+                  //     return `[${text}](${newPath}){${params}}`;
+                  //   });
+
+                  //   return newContent;
+                  // }
                   function replace_path(content, abs_path) {
-                    // 捕获 Markdown 中 [text](path) 的链接
-                    const regex = /\[([^\]]+)]\(([^)]+?)\)/g;
+                    const regex = /\[([^\]]+)]\(\s*([^)\s]+)(?:\s+(['"])(.*?)\3)?\s*\)/g;
 
-                    const newContent = content.replace(regex, (match, text, path) => {
-                      //console.log("abs_path:",abs_path,"path:",path)
-                      
-                      // 如果 path 已经是绝对 URL 或以 / 开头，不加前缀
-                      if (/^(https?:)?\/\//.test(path)) {
-                        return match;
-                      }
+                    return content.replace(
+                      regex,
+                      (match, text, path, quote, title) => {
+                        // 已是绝对 URL
+                        if (/^(https?:)?\/\//.test(path)) {
+                          return match;
+                        }
 
-                      if(path.startsWith('/') && !is_gitlab_remote){
-                        return match;
-                      }
+                        // 以 / 开头但不是 gitlab remote
+                        if (path.startsWith('/') && !is_gitlab_remote) {
+                          return match;
+                        }
+                        //console.log("title:",title,path)
 
-                      // 拼接绝对路径
-                      
-                      const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
+                        const newPath =
+                          `${abs_path.replace(/\/$/, '')}/` +
+                          `${path.replace(/^\.?\//, '')}`;
 
-                      //console.log("1path:",path,newPath)
+                        const params = `cid=${stringId} ver=${version}`;
 
-                      //if()
-                      //:fragment=demo
-                      const params = `cid=${stringId} ver=${version}`
-                      // 返回替换后的 Markdown
-                      return `[${text}](${newPath}){${params}}`;
-                    });
+                        // 重新拼装 title（如果有）
+                        const titlePart = title ? ` ${quote}${title}${quote}` : '';
 
-                    return newContent;
+                        return `[${text}](${newPath}${titlePart}){${params}}`;
+                      },
+                    );
                   }
+
 
                   content=replace_path(content,abs_path);
 

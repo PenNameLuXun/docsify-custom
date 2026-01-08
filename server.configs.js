@@ -108,6 +108,7 @@ export const devConfig = {
             });
 
             if (!response.ok) {
+              console.log("gitlabUrl:",gitlabUrl,req.url)
               res.writeHead(response.status);
               return res.end(`GitLab Error: ${response.statusText}`);
             }
@@ -115,6 +116,9 @@ export const devConfig = {
             // --- 关键改进点 1: 动态转发 Content-Type ---
             // 获取 GitLab 返回的原始文件类型（image/png, application/pdf 等）
             const contentType = response.headers.get('content-type');
+            // if(gitlabUrl.includes('sun.svg')){
+            //   console.log("gitlabUrl:",gitlabUrl,req.url,contentType)
+            // }
             if (contentType) {
               res.setHeader('Content-Type', contentType);
             }

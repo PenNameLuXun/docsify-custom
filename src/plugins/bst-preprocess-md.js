@@ -41,6 +41,31 @@ function extractAndRemoveTagPs(content) {
   };
 }
 
+function rewriteSrcset(srcset, vm) {
+  return srcset
+    .split(',')
+    .map(item => {
+      const parts = item.trim().split(/\s+/);
+      const url = parts[0];
+      const descriptor = parts.slice(1).join(' ');
+
+      if (isAbsolutePath(url)) {
+        return item.trim();
+      }
+
+      let abs = window.Docsify.util.getPath(
+        vm.compiler.contentBase,
+        getParentPath(vm.compiler.router.getCurrentPath()),
+        url,
+      );
+      abs = getConfigAlias(abs, vm);
+
+      return descriptor ? `${abs} ${descriptor}` : abs;
+    })
+    .join(', ');
+}
+
+
 
 /* eslint-disable no-unused-vars */
 /**
@@ -82,33 +107,75 @@ function preprocessMarkdown(markdown, vm) {
     { tag: 'img', attr: 'src' },
     { tag: 'video', attr: 'src' },
     { tag: 'a', attr: 'href' },
+    { tag: 'source', attr: 'srcset' }
   ];
 
+  // tagPatterns.forEach(({ tag, attr }) => {
+  //   const re = new RegExp(
+  //     `<${tag}\\s[^>]*?${attr}\\s*=\\s*"([^"]+)"[^>]*?>`,
+  //     'gi',
+  //   );
+  //   markdown = markdown.replace(re, (m, href) => {
+  //     if (!isAbsolutePath(href)) {
+  //       let abs = window.Docsify.util.getPath(
+  //         vm.compiler.contentBase,
+  //         getParentPath(vm.compiler.router.getCurrentPath()),
+  //         href,
+  //       );
+  //       abs = getConfigAlias(abs, vm);
+  //       return m.replace(href, abs);
+  //     }
+  //     return m;
+  //   });
+  // });
   tagPatterns.forEach(({ tag, attr }) => {
     const re = new RegExp(
       `<${tag}\\s[^>]*?${attr}\\s*=\\s*"([^"]+)"[^>]*?>`,
       'gi',
     );
-    markdown = markdown.replace(re, (m, href) => {
-      if (!isAbsolutePath(href)) {
-        let abs = window.Docsify.util.getPath(
+
+    markdown = markdown.replace(re, (m, value) => {
+      if (isAbsolutePath(value)) return m;
+
+      let replaced;
+
+      if (attr === 'srcset') {
+        replaced = rewriteSrcset(value, vm);
+      } else {
+        replaced = window.Docsify.util.getPath(
           vm.compiler.contentBase,
           getParentPath(vm.compiler.router.getCurrentPath()),
-          href,
+          value,
         );
-        abs = getConfigAlias(abs, vm);
-        return m.replace(href, abs);
+        replaced = getConfigAlias(replaced, vm);
       }
-      return m;
+
+      return m.replace(value, replaced);
     });
   });
 
+
   /* ---------- 处理 Markdown 图片语法 ---------- */
-  markdown = markdown.replace(/!\[.*?]\((.*?)\)/g, (m, href) => {
-    let abs = href.includes(' ') ? href.replace(/ /g, '%20') : href;
-    abs = getConfigAlias(abs, vm);
-    return m.replace(href, abs);
-  });
+  // markdown = markdown.replace(/!\[.*?]\((.*?)\)/g, (m, href) => {
+  //   let abs = href.includes(' ') ? href.replace(/ /g, '%20') : href;
+  //   abs = getConfigAlias(abs, vm);
+  //   return m.replace(href, abs);
+  // });
+  markdown = markdown.replace(
+    /!\[([^\]]*)]\(\s*([^)\s]+)(?:\s+(['"])(.*?)\3)?\s*\)/g,
+    (m, alt, href, quote, title) => {
+      let abs = href.includes(' ')
+        ? href.replace(/ /g, '%20')
+        : href;
+
+      abs = getConfigAlias(abs, vm);
+
+      const titlePart = title ? ` ${quote}${title}${quote}` : '';
+
+      return `![${alt}](${abs}${titlePart})`;
+    },
+  );
+
 
   var result = extractAndRemoveTagPs(markdown);
   markdown = result.cleaned_content
