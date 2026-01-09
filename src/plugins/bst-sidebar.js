@@ -345,7 +345,41 @@ function install(hook, vm) {
   var const_temp_placehoder="placehoder_placehoder"
 
   function save_compoients(){
+    //let wait_save = JSON.parse(JSON.stringify(g_components_user_config));
+    // //清理除current_user_version外的所有内容
+    // for (const stringId of Object.keys(wait_save)){
+    //   for (const key of Object.keys(wait_save[stringId])) {
+    //     if(key != "current_user_version"){
+    //       delete wait_save[stringId][key];
+    //     }
+    //   }
+    // }
+    //console.log("wait_save:",wait_save,g_components_user_config)
     localStorage.setItem('componentInfo', JSON.stringify(g_components_user_config));
+  }
+
+  function load_compoients(){
+    // localStorage.setItem('componentInfo', '');
+    const str = localStorage.getItem('componentInfo');
+
+    g_components_user_config = str ? JSON.parse(str) : null;
+
+    if(!g_components_user_config){
+      console.log("init  g_components_user_config to object.");
+      g_components_user_config={};
+    }
+    console.log("init window url:",window.location.hash)
+
+    //let href_1 = vm.router.toURL(window.location.hash, null, vm.router.getCurrentPath());
+
+    const { cid, ver } = parseHashQuery(window.location.hash);
+    if (cid && ver) {
+      if (!g_components_user_config[cid]) {
+        g_components_user_config[cid] = {};
+      }
+      g_components_user_config[cid].current_user_version = ver;
+    }
+    //console.log("g_components_user_config:",g_components_user_config)
   }
 
 
@@ -384,29 +418,7 @@ function isSameQueryResult(a, b) {
 }
 
 
-  function load_compoients(){
-    const str = localStorage.getItem('componentInfo');
-    //console.log("str:",str)
-
-    g_components_user_config = str ? JSON.parse(str) : null;
-
-    if(!g_components_user_config){
-      console.log("init  g_components_user_config to object.");
-      g_components_user_config={};
-    }
-    console.log("init window url:",window.location.hash)
-
-    //let href_1 = vm.router.toURL(window.location.hash, null, vm.router.getCurrentPath());
-
-    const { cid, ver } = parseHashQuery(window.location.hash);
-    if (cid && ver) {
-      if (!g_components_user_config[cid]) {
-        g_components_user_config[cid] = {};
-      }
-      g_components_user_config[cid].current_user_version = ver;
-    }
-    //console.log("g_components_user_config:",g_components_user_config)
-  }
+  
 
   function do_resolveDuplicateLinks(text){
     return resolveDuplicateLinks(text, vm.compiler.config.alias);
@@ -423,14 +435,6 @@ function indentSidebar(md, indent,level = 1) {
 function injectComponentSidebars(text, components) {
   components.forEach(comp => {
     const placeholder = `<!-- BST-COMPONENT:${comp.stringId} -->`;
-
-    // 示例：只用第一个版本
-    //const current_version = g_components_user_config[comp.stringId].current_user_version
-    //let sidebar = comp.sidebars[current_version] || '';
-
-    //let sidebar = const_temp_placehoder
-
-    //console.log("comp.stringId:",comp.stringId,"sidebar:\n",sidebar,comp.versions[0],comp.sidebars[comp.versions[0]],comp.sidebars)
 
     const injected = indentSidebar("* "+const_temp_placehoder, comp.indent,1);
 
@@ -449,7 +453,7 @@ function injectComponentSidebars(text, components) {
     content = content.replace(/<!--[\s\S]*?-->/g, '')
 
     content = content.replace(
-      /^(\s*)\*\s*@@([^@]+?)@@.*$/gm,
+      /^(\s*)\*\s*@@(.+?)@@.*$/gm,
       (match, indent,raw) => {
 
         const parts = raw.split('|').map(p => p.trim());
@@ -475,6 +479,16 @@ function injectComponentSidebars(text, components) {
           sidebars: {} // version -> sidebar content
         };
 
+        //如果本地缓存过这个组件的内容，那么需要进一步检查这些缓存的内容是否已经过期了，
+        //这里检查组件缓存的某个版本内容是否已经不存在了，如果不存在了那么删除掉
+        if(g_components_user_config[stringId] && g_components_user_config[stringId].versions){
+          for (const ver of Object.keys(g_components_user_config[stringId].versions)) {
+            if (!versions.includes(ver)) {
+              delete g_components_user_config[stringId].versions[ver];
+            }
+          }
+        }
+
         let current_user_version = versions[0];
         if(g_components_user_config[stringId] && g_components_user_config[stringId].current_user_version){
           current_user_version=g_components_user_config[stringId].current_user_version;
@@ -490,11 +504,15 @@ function injectComponentSidebars(text, components) {
 
         g_components_user_config[stringId]["raw"]=raw
 
+        if(!g_components_user_config[stringId].versions){
+          g_components_user_config[stringId].versions = {}
+        }
+
         
         // 为每个版本创建 fetch 任务
         versions.forEach((version, idx) => {
-          if(!g_components_user_config[stringId][version]){
-            g_components_user_config[stringId][version] = {}
+          if(!g_components_user_config[stringId].versions[version]){
+            g_components_user_config[stringId].versions[version] = {}
           }
           var abs_path = component.paths[idx];
           
@@ -505,7 +523,7 @@ function injectComponentSidebars(text, components) {
           const is_abspath = window.Docsify.util.isAbsolutePath(sidebarFile)
           const is_gitlab_remote = sidebarFile.startsWith("/gitlab-raw")
 
-           
+          //console.log("sidebarFile:",sidebarFile,is_remote)
           if(is_remote){
             function makeAlias(abs_path) {
               // 去掉 http:// 或 https://
@@ -521,8 +539,10 @@ function injectComponentSidebars(text, components) {
             const alias_name = makeAlias(abs_path)
             //需要创建一个别名伪装成本地内容
             vm.compiler.config.alias[alias_name + "/(.*)"] = abs_path + "/$1"
+            
             abs_path = alias_name
             component.paths[idx] = abs_path
+            //console.log("component.paths[idx]:",component.paths[idx])
           }
           //console.log("abs_path:",abs_path,vm.compiler.config.alias)
 
@@ -577,12 +597,12 @@ function injectComponentSidebars(text, components) {
                   //console.log("then content:",content,stringId,version)
 
                   component.sidebars[version] = content;
-                  g_components_user_config[stringId][version]["content"] = content;
+                  g_components_user_config[stringId].versions[version]["content"] = content;
                   resolve(content); // 标准 Promise resolve
                 },
                 (err) => {
                   component.sidebars[version] = '';
-                  g_components_user_config[stringId][version]["content"]="";
+                  g_components_user_config[stringId].versions[version]["content"]="";
                   console.warn(`[docsify-component] sidebar 加载失败: ${sidebarFile}`);
                   resolve(''); // 即使失败也 resolve
                 }
@@ -606,6 +626,25 @@ function injectComponentSidebars(text, components) {
         return `${indent}* @@${new_raw}\n<!-- BST-COMPONENT:${stringId} -->`;
       }
     );
+
+
+    function check_stringid(stringId){
+      g_components.forEach((one,idx)=>{
+        if(one.stringId == stringId){
+          return true;
+        }
+      })
+      return false;
+    }
+    //清理storage中的坏数据，已经无效了
+    //这里清理已经不存在的组件
+    if(g_components_user_config){
+        for (const stringId of Object.keys(g_components_user_config)) {
+          if (check_stringid(stringId)) {
+            delete g_components_user_config[key];
+          }
+      }
+    }
 
     return {
       text: content,
@@ -692,75 +731,6 @@ function injectComponentSidebars(text, components) {
     });
   }
 
-// function add_has_context_class(
-//   li_list = document.querySelectorAll('.sidebar-nav li')
-// ) {
-//   li_list.forEach(li => {
-//     const subUl = li.querySelector(':scope > ul');
-
-//     if (!subUl) {
-//       li.classList.add('file');
-//       return;
-//     }
-
-//     li.classList.add('folder', 'collapse');
-
-//     /* 1. 确保有 <p> */
-//     let p = li.querySelector(':scope > p');
-//     if (!p) {
-//       for (const node of li.childNodes) {
-//         if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-//           p = document.createElement('p');
-//           p.textContent = node.nodeValue.trim();
-//           li.replaceChild(p, node);
-//           break;
-//         }
-//       }
-//     }
-//     if (!p) return;
-
-//     /* 2. 统一的 toggle 函数 */
-//     const toggle = () => {
-//       const collapsed = li.classList.toggle('collapse');
-//       btn.textContent = collapsed ? '+' : '-';
-//       subUl.style.display = collapsed ? 'none' : '';
-//     };
-
-//     /* 3. 添加按钮（只一次） */
-//     let btn = p.querySelector('.toggle-btn');
-//     if (!btn) {
-//       btn = document.createElement('button');
-//       btn.className = 'toggle-btn';
-//       btn.type = 'button';
-//       btn.textContent = '+';
-//       btn.setAttribute('aria-label', 'toggle');
-//       p.prepend(btn);
-//     }
-
-//     // 初始折叠
-//     subUl.style.display = 'none';
-
-//     /* 4. 按钮点击 */
-//     btn.addEventListener('click', e => {
-//       e.stopPropagation();
-//       toggle();
-//     });
-
-//     /* 5. 点击 p 展开/收起（但排除 <a>） */
-//     p.addEventListener('click', e => {
-//       if (e.target.closest('a')) return;
-//       toggle();
-//     });
-
-//     /* 6. 标记是否有内容链接 */
-//     if (p.querySelector('a')) {
-//       li.classList.add('hascontent');
-//     }
-//   });
-// }
-
-
-
   function getLi_P_text(li){
     const text = li.querySelector(':scope > p')?.textContent ?? '';
     return text;
@@ -845,7 +815,7 @@ function injectComponentSidebars(text, components) {
 
     g_components_user_config[cid]["current_user_version"] = version;
 
-    const new_sidebar  = g_components_user_config[cid][version].content;
+    const new_sidebar  = g_components_user_config[cid].versions[version].content;
 
     //console.log("new_sidebar:",new_sidebar,cid,version)
 
