@@ -463,6 +463,7 @@ function injectComponentSidebars(text, components) {
 
         const versions = versionStr.split(',').map(v => v.trim());
         const paths = pathStr.split(',').map(p => p.trim());
+        //console.log("paths:",paths,versions)
 
         const component = {
           stringId,
@@ -488,8 +489,8 @@ function injectComponentSidebars(text, components) {
         }
 
         g_components_user_config[stringId]["raw"]=raw
-        
 
+        
         // 为每个版本创建 fetch 任务
         versions.forEach((version, idx) => {
           if(!g_components_user_config[stringId][version]){
@@ -504,14 +505,26 @@ function injectComponentSidebars(text, components) {
           const is_abspath = window.Docsify.util.isAbsolutePath(sidebarFile)
           const is_gitlab_remote = sidebarFile.startsWith("/gitlab-raw")
 
-          const alias_name = "/" + encodeURI(abs_path)
+           
           if(is_remote){
+            function makeAlias(abs_path) {
+              // 去掉 http:// 或 https://
+              const clean = abs_path.replace(/^https?:\/\//i, '');
+
+              // 去掉多余的尾部 /
+              const normalized = clean.replace(/\/+$/, '');
+
+              return '/' + encodeURI(normalized);
+            }
+
+            abs_path = abs_path.replace(/\/$/, '')
+            const alias_name = makeAlias(abs_path)
             //需要创建一个别名伪装成本地内容
-            vm.compiler.config.alias[alias_name + "(.*)"] = abs_path + "$1"
-            //vm.compiler.config.alias[alias_name + "_media/(.*)"] = abs_path + "_media/$1"
-            ///https://raw.githubusercontent.com/docsifyjs/docsify/refs/heads/develop/docs/_media
+            vm.compiler.config.alias[alias_name + "/(.*)"] = abs_path + "/$1"
             abs_path = alias_name
+            component.paths[idx] = abs_path
           }
+          //console.log("abs_path:",abs_path,vm.compiler.config.alias)
 
           //console.log("abs_path:",abs_path,window.Docsify,is_remote,is_abspath,vm.compiler.config.alias)
           // 包装成 Promise
@@ -522,39 +535,7 @@ function injectComponentSidebars(text, components) {
               
               thenable.then(
                 (content) => {
-                  //针对content中的路径还得更新成
-                  //...todo
-                  // function replace_path(content, abs_path) {
-                  //   // 捕获 Markdown 中 [text](path) 的链接
-                  //   const regex = /\[([^\]]+)]\(([^)]+?)\)/g;
-
-                  //   const newContent = content.replace(regex, (match, text, path) => {
-                  //     //console.log("abs_path:",abs_path,"path:",path)
-                      
-                  //     // 如果 path 已经是绝对 URL 或以 / 开头，不加前缀
-                  //     if (/^(https?:)?\/\//.test(path)) {
-                  //       return match;
-                  //     }
-
-                  //     if(path.startsWith('/') && !is_gitlab_remote){
-                  //       return match;
-                  //     }
-
-                  //     // 拼接绝对路径
-                      
-                  //     const newPath = `${abs_path.replace(/\/$/, '')}/${path.replace(/^\.?\//, '')}`;
-
-                  //     //console.log("1path:",path,newPath)
-
-                  //     //if()
-                  //     //:fragment=demo
-                  //     const params = `cid=${stringId} ver=${version}`
-                  //     // 返回替换后的 Markdown
-                  //     return `[${text}](${newPath}){${params}}`;
-                  //   });
-
-                  //   return newContent;
-                  // }
+                  //针对sidebar中动态的content内容中的相对路径还得转成绝对路径处理
                   function replace_path(content, abs_path) {
                     const regex = /\[([^\]]+)]\(\s*([^)\s]+)(?:\s+(['"])(.*?)\3)?\s*\)/g;
 
@@ -613,12 +594,16 @@ function injectComponentSidebars(text, components) {
         });
 
 
-        //console.log("component:",component)
+        
+        let component_paths = component.paths.join(',')
+        let new_raw = `${parts[0]}|${parts[1]}|${parts[2]}|${component_paths}`
+
+        //console.log("new_raw:",new_raw)
         g_components.push(component);
 
         // 同步阶段只负责生成 Markdown
-        //console.log("raw:",raw);
-        return `${indent}* @@${raw}\n<!-- BST-COMPONENT:${stringId} -->`;
+        //console.log("raw:",raw,parts[0],parts[1],parts[2],parts[3]);
+        return `${indent}* @@${new_raw}\n<!-- BST-COMPONENT:${stringId} -->`;
       }
     );
 

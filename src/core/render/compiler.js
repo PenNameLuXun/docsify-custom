@@ -98,7 +98,7 @@ export class Compiler {
    *
    * @return {type} Return value description.
    */
-  compileEmbed(href, title) {
+  compileEmbed(href, title,router) {
     const { str, config } = getAndRemoveConfig(title);
     let embed;
     title = str;
@@ -110,6 +110,7 @@ export class Compiler {
           getParentPath(this.router.getCurrentPath()),
           href,
         );
+        href = router?.getAlias(href)
       }
 
       let media;

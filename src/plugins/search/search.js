@@ -358,11 +358,16 @@ export async function init(config, vm) {
           path_params.params[i]
         );
         if (len === ++count) {
-          //console.log("expireKeyexpireKey:",expireKey,config.maxAge)
-          //saveData(config.maxAge, expireKey);
           await saveData(config.maxAge, expireKey);
         }
       },
+      async (event,status)=>{
+        INDEXES[path]={}
+        if (len === ++count) {
+          await saveData(config.maxAge, expireKey);
+        }
+        console.log(`[serch plugin] error when fetch ${path}:`,event,status)
+      }
     );
   });
 }

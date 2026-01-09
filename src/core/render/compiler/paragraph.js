@@ -31,11 +31,10 @@ function parase_component(raw) {
   // 生成 option
   let optionsHtml = '';
   versions.forEach((version, index) => {
-    const path = paths[index];
+    //let path = paths[index];
     optionsHtml += `
       <option 
         value="${version}"
-        data-path="${path}"
         data-cname="${name}"
         data-cid="${stringId}">
         ${version}

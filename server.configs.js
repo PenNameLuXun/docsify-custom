@@ -108,7 +108,7 @@ export const devConfig = {
             });
 
             if (!response.ok) {
-              console.log("gitlabUrl:",gitlabUrl,req.url)
+              console.log("gitlabUrl error:",gitlabUrl,req.url)
               res.writeHead(response.status);
               return res.end(`GitLab Error: ${response.statusText}`);
             }
